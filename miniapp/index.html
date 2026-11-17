@@ -136,8 +136,9 @@
   .ledger li:first-child .row { border-radius: 13px 13px 0 0; }
   .ledger li:last-child .row { border-radius: 0 0 13px 13px; }
   .ledger li:only-child .row { border-radius: 13px; }
-  .row:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
-  .row:active { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  /* rgba = cadangan untuk browser tanpa color-mix (iOS < 16.2) */
+  .row:hover { background: rgba(128, 128, 128, 0.06); background: color-mix(in srgb, var(--ink) 4%, transparent); }
+  .row:active { background: rgba(128, 128, 128, 0.12); background: color-mix(in srgb, var(--ink) 8%, transparent); }
   .row-main { min-width: 0; display: grid; gap: 2px; }
   .row-name { font-weight: 650; font-size: 16px; overflow-wrap: anywhere; }
   .row-meta { color: var(--ink-2); font-size: 13px; overflow-wrap: anywhere; }
@@ -385,7 +386,12 @@
     .hero-amt { font-size: 44px; }
     h2.title { font-size: 32px; }
     dialog { border-radius: 18px; margin: auto; }
+    .no-dialog dialog[open] { bottom: auto; top: 50%; -webkit-transform: translateY(-50%); transform: translateY(-50%); }
   }
+  /* Cadangan <dialog> untuk browser tanpa showModal (iOS Safari < 15.4): lihat dialogCadangan(). */
+  .no-dialog dialog { display: none; }
+  .no-dialog dialog[open] { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; max-height: 90%; overflow: auto; -webkit-overflow-scrolling: touch; }
+  .dlg-backdrop { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 20; background: var(--shade); }
 </style>
 
 </head>
@@ -613,6 +619,40 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
 function fmt(n) { n = Math.round(Number(n) || 0); return (n < 0 ? '-' : '') + String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 function rp(n) { return 'Rp ' + fmt(n); }
 function digits(s) { return parseInt(String(s || '').replace(/\D/g, ''), 10) || 0; }
+/*
+ * Tulis ulang kolom angka dengan titik ribuan tanpa melempar kursor ke ujung: posisi kursor dihitung
+ * dari jumlah digit di kirinya. Backspace/Delete yang hanya mengenai titik ikut menghapus digit di
+ * sebelahnya, supaya tombol hapus tidak terasa macet. Mengembalikan angkanya.
+ */
+function fmtInput(el, e) {
+  var v = el.value, pos = el.selectionStart == null ? v.length : el.selectionStart;
+  var semua = v.replace(/\D/g, ''), kiri = v.slice(0, pos).replace(/\D/g, '').length;
+  var jenis = e && e.inputType;
+  if (semua === el._digit && (jenis === 'deleteContentBackward' || jenis === 'deleteContentForward')) {
+    var at = jenis === 'deleteContentBackward' ? kiri - 1 : kiri;
+    if (at >= 0 && at < semua.length) { semua = semua.slice(0, at) + semua.slice(at + 1); kiri = at; }
+  }
+  var nol = semua.length - semua.replace(/^0+/, '').length;
+  kiri = Math.max(0, kiri - nol);
+  var n = digits(semua), baru = n ? fmt(n) : '';
+  el._digit = baru.replace(/\D/g, '');
+  if (baru !== v) {
+    el.value = baru;
+    var i = 0;
+    for (var d = 0; i < baru.length && d < kiri; i++) if (baru.charAt(i) !== '.') d++;
+    if (document.activeElement === el) { try { el.setSelectionRange(i, i); } catch (x) {} }
+  }
+  return n;
+}
+/* Buang karakter yang tidak boleh tanpa memindah kursor (kolom diskon persen). */
+function saringInput(el, re) {
+  var v = el.value, pos = el.selectionStart == null ? v.length : el.selectionStart;
+  var baru = v.replace(re, '');
+  if (baru === v) return;
+  var geser = pos - v.slice(0, pos).replace(re, '').length;
+  el.value = baru;
+  if (document.activeElement === el) { try { el.setSelectionRange(pos - geser, pos - geser); } catch (x) {} }
+}
 function todayIso() { var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
 function tglIndo(iso) { if (!iso) return ''; var p = iso.split('-'); return Number(p[2]) + ' ' + BULAN[Number(p[1]) - 1] + ' ' + p[0]; }
 /* "22 Januari 2027" -> "2027-01-22" (untuk kolom tanggal saat edit); tidak terbaca -> '' */
@@ -1259,7 +1299,70 @@ function showDone(kind, inv, extra) {
 }
 
 /* ---------------- event ---------------- */
+/*
+ * Cadangan <dialog> untuk browser tanpa showModal (iOS Safari < 15.4, WebView Android lama).
+ * Meniru yang dipakai halaman ini: showModal/close(nilai), returnValue, event close & cancel,
+ * form method="dialog" (nilai tombol), Escape, dan ketuk area gelap (klik dengan target dialog).
+ */
+function dialogCadangan() {
+  if (typeof HTMLDialogElement === 'function' && HTMLDialogElement.prototype.showModal) return;
+  document.documentElement.className += ' no-dialog';
+  var buka = null, tombol = null;
+  function kirim(d, nama, bisaBatal) {
+    var ev = document.createEvent('Event');
+    ev.initEvent(nama, false, !!bisaBatal);
+    return d.dispatchEvent(ev);
+  }
+  [].forEach.call(document.querySelectorAll('dialog'), function (d) {
+    var latar = document.createElement('div'), fokus = null;
+    latar.className = 'dlg-backdrop';
+    latar.hidden = true;
+    latar.addEventListener('click', function () { d.click(); });
+    d.parentNode.insertBefore(latar, d);
+    d.open = false;
+    d.returnValue = '';
+    d.showModal = function () {
+      if (d.open) return;
+      fokus = document.activeElement;
+      buka = d;
+      d.open = true;
+      d.setAttribute('open', '');
+      latar.hidden = false;
+    };
+    d.close = function (nilai) {
+      if (!d.open) return;
+      if (nilai !== undefined) d.returnValue = nilai;
+      d.open = false;
+      d.removeAttribute('open');
+      latar.hidden = true;
+      if (buka === d) buka = null;
+      kirim(d, 'close');
+      if (fokus && fokus.focus) { try { fokus.focus(); } catch (x) {} }
+    };
+  });
+  // tombol yang mengirim form (klik, atau Enter yang memicu klik tombol utama)
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('button');
+    tombol = b && b.form && (b.getAttribute('type') || 'submit') === 'submit' ? b : null;
+  }, true);
+  // berjalan setelah handler submit milik halaman: kalau sudah preventDefault, dialog tetap terbuka
+  document.addEventListener('submit', function (e) {
+    var f = e.target, d = f.closest && f.closest('dialog');
+    if (!d || (f.getAttribute('method') || '').toLowerCase() !== 'dialog') return;
+    if (e.defaultPrevented) return;
+    e.preventDefault();
+    d.close(tombol && tombol.form === f ? tombol.value : '');
+  });
+  document.addEventListener('keydown', function (e) {
+    if ((e.key === 'Escape' || e.key === 'Esc') && buka) {
+      var d = buka;
+      if (kirim(d, 'cancel', true)) d.close('');
+    }
+  });
+}
+
 function bind() {
+  dialogCadangan();
   $('tabs').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     tap();
@@ -1312,7 +1415,7 @@ function bind() {
     var card = e.target.closest('.item'); if (!card) return;
     var it = S.items[card.dataset.k], f = e.target.dataset.f;
     if (f === 'nama') it.nama = e.target.value;
-    if (f === 'harga') { it.harga = digits(e.target.value); e.target.value = it.harga ? fmt(it.harga) : ''; }
+    if (f === 'harga') it.harga = fmtInput(e.target, e);
     if (f === 'qty') it.qty = Math.max(1, digits(e.target.value) || 1);
     card.querySelector('[data-total]').textContent = rp(it.harga * it.qty);
     recalcInvoice();
@@ -1340,9 +1443,9 @@ function bind() {
     }
     recalcInvoice();
   });
-  $('fDiskon').addEventListener('input', function () {
-    if (S.diskonMode === 'rp') { var n = digits(this.value); this.value = n ? fmt(n) : ''; }
-    else this.value = this.value.replace(/[^\d.,]/g, '');
+  $('fDiskon').addEventListener('input', function (e) {
+    if (S.diskonMode === 'rp') fmtInput(this, e);
+    else saringInput(this, /[^\d.,]/g);
     recalcInvoice();
   });
   $('diskonMode').addEventListener('click', function (e) {
@@ -1362,7 +1465,7 @@ function bind() {
   });
 
   // pembayaran
-  $('rJumlah').addEventListener('input', function () { var n = digits(this.value); this.value = n ? fmt(n) : ''; recalcReceipt(); });
+  $('rJumlah').addEventListener('input', function (e) { fmtInput(this, e); recalcReceipt(); });
   $('rQuick').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     tap(); $('rJumlah').value = fmt(Number(b.dataset.v)); recalcReceipt();

@@ -186,8 +186,13 @@ function cmdReceipt_(chatId, body, oleh) {
   if (!f.jumlah) errors.push('"Dibayarkan" (jumlah yang dibayar) wajib diisi.');
   if (errors.length) return errorReply_(chatId, errors, TEMPLATE_RECEIPT);
 
+  var data = { noInvoice: noInvoice, jumlah: f.jumlah, metode: f.metode, tglBayar: f.tglBayar };
+  buatReceiptChat_(chatId, data, oleh);
+}
+
+function buatReceiptChat_(chatId, data, oleh) {
   sendTyping_(chatId);
-  var r = createReceipt_({ noInvoice: noInvoice, jumlah: f.jumlah, metode: f.metode, tglBayar: f.tglBayar }, chatId, oleh);
+  var r = createReceipt_(data, chatId, oleh);
   if (r.errors) return sendMessage_(chatId, '❌ ' + r.errors.map(esc_).join('\n❌ ') +
     '\n\nKetik /cek untuk melihat daftar invoice.');
   sendDocument_(chatId, r.pdf, receiptCaption_(r.inv, r.pay));
