@@ -17,6 +17,15 @@ var PAY_COL_NO_RECEIPT = 16;
 
 var PRODUK_HEADERS = ['Kode', 'Nama', 'Ditambah', 'Ditambah Oleh'];
 
+/**
+ * Label yang tampil di bot, PDF, Mini App, dan Sheets. Bisa diganti lewat CONFIG.LABEL, misalnya
+ * { proyek: 'Proyek', proyekPanjang: 'Proyek', uangMuka: 'Uang muka' }.
+ */
+function label_(k) {
+  var bawaan = { proyek: 'Proyek', proyekPanjang: 'Proyek', uangMuka: 'Uang muka', contohProyek: 'Nama proyek' };
+  return (CONFIG.LABEL && CONFIG.LABEL[k]) || bawaan[k] || k;
+}
+
 function prop_(key) {
   return PropertiesService.getScriptProperties().getProperty(key);
 }
@@ -61,7 +70,10 @@ function fmtDibuat_(v) {
 var RIWAYAT_HEADERS = ['Waktu', 'Aksi', 'No Invoice', 'Oleh', 'Perubahan', 'Alasan',
   'Data Lama (JSON)', 'Data Baru (JSON)'];
 
-function invoiceSheet_() { return getSheet_(CONFIG.SHEET_INVOICE, INVOICE_HEADERS, INVOICE_TEXT_COLS); }
+function invoiceSheet_() {
+  INVOICE_HEADERS[4] = label_('proyek'); // judul kolom E mengikuti CONFIG.LABEL
+  return getSheet_(CONFIG.SHEET_INVOICE, INVOICE_HEADERS, INVOICE_TEXT_COLS);
+}
 function paymentSheet_() { return getSheet_(CONFIG.SHEET_PEMBAYARAN, PAY_HEADERS, 4); }
 function riwayatSheet_() { return getSheet_(CONFIG.SHEET_RIWAYAT || 'Riwayat', RIWAYAT_HEADERS, 6); }
 function produkSheet_() { return getSheet_(CONFIG.SHEET_PRODUK || 'Produk', PRODUK_HEADERS, 2); }
@@ -79,7 +91,7 @@ function extraProduk_() {
     .filter(function (p) { return p.kode && !CONFIG.PRODUK[p.kode]; });
 }
 
-/** Semua produk: dari Config lalu dari tab Produk -> { DG: 'Desain Grafis', ... } */
+/** Semua produk: dari Config lalu dari tab Produk -> { KODE: 'Nama produk', ... } */
 function produk_() {
   var out = {};
   Object.keys(CONFIG.PRODUK).forEach(function (k) { out[k] = CONFIG.PRODUK[k]; });
@@ -199,7 +211,7 @@ function rowToInvoice_(r) {
   };
 }
 
-/** "Paket Desain Logo, Revisi Tambahan ×2" untuk kolom Item. */
+/** "Paket A, Paket B ×2" untuk kolom Item. */
 function ringkasItem_(items) {
   return (items || []).map(function (it) {
     var q = Number(it.qty) || 1;
@@ -282,7 +294,7 @@ function saveReceiptToDrive_(blob) {
   return folder.createFile(blob);
 }
 
-/** Nama produk untuk judul PDF, dari kode di nomor invoice ("INV-CP-..." -> "Percetakan"). */
+/** Nama produk untuk judul PDF, dari kode di nomor invoice ("INV-CP-..." -> nama produk CP). */
 function produkNama_(noInvoice) {
   try { return produk_()[kodeDariNo_(noInvoice)] || ''; } catch (e) { return CONFIG.PRODUK[kodeDariNo_(noInvoice)] || ''; }
 }

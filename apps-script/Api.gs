@@ -110,7 +110,9 @@ function miniAppConfig_() {
     produk: produk_(),
     paket: CONFIG.PAKET,
     metode: CONFIG.METODE,
-    bank: CONFIG.BANK
+    bank: CONFIG.BANK,
+    label: { proyek: label_('proyek'), proyekPanjang: label_('proyekPanjang'), uangMuka: label_('uangMuka'),
+      contohProyek: label_('contohProyek') }
   };
 }
 

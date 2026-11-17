@@ -220,7 +220,7 @@ function invoiceCaption_(inv, dp) {
   return '🧾 <b>Invoice ' + esc_(inv.noInvoice) + '</b>' + (inv.revisi ? ' · Revisi ' + inv.revisi : '') + '\n' +
     esc_(inv.kepada) + (inv.mempelai ? ' · ' + esc_(inv.mempelai) : '') + '\n' +
     'Total: <b>' + fmtRp_(inv.total) + '</b>\n' +
-    'Uang muka (' + CONFIG.DP_PERSEN + '%): ' + fmtRp_(dp);
+    label_('uangMuka') + ' (' + CONFIG.DP_PERSEN + '%): ' + fmtRp_(dp);
 }
 
 function receiptCaption_(inv, pay) {

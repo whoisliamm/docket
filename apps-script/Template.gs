@@ -6,11 +6,12 @@
  * Semua fungsi di file ini murni (tanpa layanan Apps Script), sehingga
  * bisa juga dijalankan di Node.js untuk preview.
  *
- * Warna aksen: ubah WARNA_AKSEN dan WARNA_AKSEN_TEKS di bawah ini.
+ * Warna aksen: CONFIG.WARNA_AKSEN (garis kop) dan CONFIG.WARNA_AKSEN_TEKS (teks berwarna, lebih gelap
+ * agar mudah dibaca). Label istilah mengikuti CONFIG.LABEL (lihat label_ di Storage.gs).
  */
 
-var WARNA_AKSEN = '#0E9F9E';      // garis kop
-var WARNA_AKSEN_TEKS = '#0B7D7C'; // teks berwarna (lebih gelap agar mudah dibaca)
+function warnaAksen_() { return CONFIG.WARNA_AKSEN || '#0E9F9E'; }
+function warnaAksenTeks_() { return CONFIG.WARNA_AKSEN_TEKS || '#0B7D7C'; }
 
 function esc_(s) {
   return String(s == null ? '' : s)
@@ -37,8 +38,8 @@ function docCss_() {
     'table { border-collapse: collapse; }',
     'td, th { vertical-align: top; padding: 0; }',
     '.title { font-size: 30pt; font-weight: bold; letter-spacing: 0.5px; color: #0F2E35; }',
-    '.usaha { font-size: 15pt; font-weight: bold; color: ' + WARNA_AKSEN_TEKS + '; }',
-    '.rule { border-bottom: 3px solid ' + WARNA_AKSEN + '; height: 1px; margin: 10px 0 18px 0; }',
+    '.usaha { font-size: 15pt; font-weight: bold; color: ' + warnaAksenTeks_() + '; }',
+    '.rule { border-bottom: 3px solid ' + warnaAksen_() + '; height: 1px; margin: 10px 0 18px 0; }',
     '.kaki { margin-top: 28px; font-size: 8pt; color: #8a949c; }',
     '.kv td { padding: 2px 0; }',
     '.kv td.l { width: 95px; }',
@@ -48,7 +49,7 @@ function docCss_() {
     '.r { text-align: right; }',
     '.ctr { text-align: center; }',
     '.totals td { padding: 3px 0; }',
-    '.grand td { font-weight: bold; font-size: 11.5pt; padding-top: 5px; color: ' + WARNA_AKSEN_TEKS + '; }',
+    '.grand td { font-weight: bold; font-size: 11.5pt; padding-top: 5px; color: ' + warnaAksenTeks_() + '; }',
     '.b { font-weight: bold; }',
     '.sp { height: 18px; }'
   ].join('\n');
@@ -57,7 +58,8 @@ function docCss_() {
 function wrapHtml_(body) {
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + docCss_() +
     '</style></head><body>' + body +
-    '<div class="kaki">Dibuat dengan Docket Lite</div></body></html>';
+    '<div class="kaki">Dibuat dengan Docket Lite</div>' +
+    '</body></html>';
 }
 
 /** Header: judul besar di kiri, logo (atau nama usaha) di kanan, garis aksen di bawah. */
@@ -84,7 +86,7 @@ function kvHtml_(rows, labelWidth) {
   }).join('') + '</table>';
 }
 
-/** Blok info klien (Kepada/Domisili/Invoice/Tgl Invoice | Proyek/Tanggal Acara). */
+/** Blok info klien (Kepada/Domisili/Invoice/Tgl Invoice | proyek/Tanggal Acara). */
 function infoHtml_(d) {
   var kiri = kvHtml_([
     ['Kepada', esc_(d.kepada)],
@@ -94,7 +96,7 @@ function infoHtml_(d) {
     ['Tgl Invoice', esc_(d.tglInvoice)]
   ], 85);
   var kanan = kvHtml_([
-    ['Proyek', esc_(d.mempelai)],
+    [label_('proyekPanjang'), esc_(d.mempelai)],
     ['Tanggal Acara', esc_(d.tanggalAcara)]
   ], 118);
   return '<table width="100%"><tr><td width="54%">' + kiri + '</td><td>' + kanan + '</td></tr></table>';
@@ -144,7 +146,7 @@ function buildInvoiceHtml(d) {
     ], 85);
   var catatan = '<div class="b" style="line-height: 1.7;">' +
     'Catatan Pembayaran:<br>' +
-    'Uang muka (' + CONFIG.DP_PERSEN + '%): ' + fmtRp_(dp) + '<br>' +
+    label_('uangMuka') + ' (' + CONFIG.DP_PERSEN + '%): ' + fmtRp_(dp) + '<br>' +
     (jadwalPelunasan_(d.noInvoice, d.tanggalAcara) ? 'Pelunasan: ' + esc_(jadwalPelunasan_(d.noInvoice, d.tanggalAcara)) + '<br>' : '') +
     'Konfirmasi pembayaran: ' + esc_(CONFIG.WA) + ' (WA)</div>';
 
@@ -187,3 +189,4 @@ function buildReceiptHtml(d, pay) {
     '<div class="sp"></div>' + sisaHtml
   );
 }
+

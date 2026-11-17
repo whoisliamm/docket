@@ -457,7 +457,7 @@
     <fieldset>
       <legend>Acara</legend>
       <div class="fields">
-        <label class="field" for="fProyek"><span>Proyek</span><input id="fProyek" autocomplete="off" placeholder="Nama proyek"></label>
+        <label class="field" for="fProyek"><span data-label="proyekPanjang">Proyek</span><input id="fProyek" autocomplete="off" placeholder="Nama proyek"></label>
         <label class="field" for="fTglAcara"><span>Tanggal acara</span><input id="fTglAcara" type="date"></label>
       </div>
     </fieldset>
@@ -841,7 +841,7 @@ function renderList() {
   }
   if (q) {
     body.innerHTML = '<div class="note"><p>Tidak ada invoice yang cocok dengan “' + esc(S.q) + '”.</p>' +
-      '<p class="lead">Coba nama klien, nama mempelai, atau nomor invoice.</p>' +
+      '<p class="lead">Coba nama klien, ' + L('proyekPanjang').toLowerCase() + ', atau nomor invoice.</p>' +
       '<button class="btn soft inline" type="button" data-act="clear">Hapus pencarian</button></div>';
   } else if (!S.invoices.length) {
     body.innerHTML = '<div class="note"><p class="lead">Belum ada invoice.</p>' +
@@ -879,7 +879,7 @@ function openDetail(no, keep) {
       '<h3 class="sec">Info</h3>';
   }
   html += '<div class="doc"><dl class="kv">' + kv([
-      ['Proyek', i.mempelai], ['Tanggal acara', i.tanggalAcara],
+      [L('proyekPanjang'), i.mempelai], ['Tanggal acara', i.tanggalAcara],
       ['Domisili', i.domisili], ['Tgl invoice', i.tglInvoice], ['Dibuat oleh', i.dibuatOleh],
       ['Diubah oleh', !batal && i.diubahOleh ? i.diubahOleh + (i.diubahPada ? ', ' + i.diubahPada : '') : '']
     ]) + '</dl></div>' +
@@ -1039,7 +1039,7 @@ function recalcInvoice() {
   $('sSub').textContent = rp(c.subtotal);
   $('sDisk').textContent = c.diskon ? '−' + rp(c.diskon) : rp(0);
   $('sTotal').textContent = rp(c.total);
-  $('sDpL').textContent = 'Uang muka ' + S.config.dpPersen + '%';
+  $('sDpL').textContent = L('uangMuka') + ' ' + S.config.dpPersen + '%';
   $('sDp').textContent = rp(c.dp);
   if (S.edit) {
     var changed = c.total !== S.edit.total;
@@ -1149,7 +1149,7 @@ function renderReceipt() {
 
     var quick = [];
     var dp = Math.round(inv.total * S.config.dpPersen / 100);
-    if (inv.dibayar === 0 && dp < sisa) quick.push(['Uang muka ' + S.config.dpPersen + '%', dp]);
+    if (inv.dibayar === 0 && dp < sisa) quick.push([L('uangMuka') + ' ' + S.config.dpPersen + '%', dp]);
     quick.push(['Lunasi sisa', sisa]);
     $('rQuick').innerHTML = quick.map(function (q) {
       return '<button class="pick" type="button" aria-pressed="false" data-v="' + q[1] + '">' + esc(q[0]) + ' <small class="num">' + rp(q[1]) + '</small></button>';
@@ -1236,9 +1236,9 @@ function showDone(kind, inv, extra) {
       '<h2 class="title">Invoice ' + esc(inv.noInvoice) + ' dibuat</h2>' +
       '<p class="lead">' + (DEMO ? 'Ini hanya contoh: tidak ada yang tersimpan dan tidak ada PDF yang dikirim.' : 'PDF-nya sudah dikirim bot ke chat kamu. Teruskan ke klien dari sana.') + '</p>' +
       '<hr class="rule"><div class="doc"><dl class="kv num">' + kv([
-        ['Kepada', inv.kepada], ['Total', rp(inv.total)], ['Uang muka ' + S.config.dpPersen + '%', dp > 0 ? rp(dp) : '']
+        ['Kepada', inv.kepada], ['Total', rp(inv.total)], [L('uangMuka') + ' ' + S.config.dpPersen + '%', dp > 0 ? rp(dp) : '']
       ]) + '</dl></div>' +
-      '<div class="actions">' + (dp > 0 ? '<button class="btn primary" type="button" data-act="pay-dp">' + ICON.plus + 'Catat uang muka ' + rp(dp) + '</button>' : '') +
+      '<div class="actions">' + (dp > 0 ? '<button class="btn primary" type="button" data-act="pay-dp">' + ICON.plus + 'Catat ' + L('uangMuka').toLowerCase() + ' ' + rp(dp) + '</button>' : '') +
       '<button class="btn ' + (dp > 0 ? 'soft' : 'primary') + '" type="button" data-act="new">Buat invoice lain</button>';
   } else {
     var lunas = extra.status === 'LUNAS', url = safeUrl(extra.url);
@@ -1390,8 +1390,16 @@ function bind() {
   }
 }
 
+/* Label istilah dari server (CONFIG.LABEL), misalnya "Proyek" atau "Proyek". */
+function L(k) {
+  var bawaan = { proyek: 'Proyek', proyekPanjang: 'Proyek', uangMuka: 'Uang muka', contohProyek: 'Nama proyek' };
+  return (S.config && S.config.label && S.config.label[k]) || bawaan[k] || k;
+}
 function initConfig() {
   S.kode = S.config.kodeDefault;
+  [].forEach.call(document.querySelectorAll('[data-label]'), function (el) { el.textContent = L(el.dataset.label); });
+  $('fProyek').placeholder = L('contohProyek');
+  $('search').placeholder = 'Cari klien, ' + L('proyek').toLowerCase() + ', atau nomor';
   renderPresets();
 }
 function renderPresets() {

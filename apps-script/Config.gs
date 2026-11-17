@@ -11,6 +11,9 @@ var CONFIG = {
 
   // Nama usaha, tampil di kop invoice & receipt bila LOGO_BASE64 (Assets.gs) kosong.
   NAMA_USAHA: 'Nama Usaha Kamu',
+  JUDUL_BOT: 'Docket Lite',   // judul daftar perintah & producer PDF
+  NAMA_BOT: 'Docket',       // dipakai di dalam kalimat
+  // Label istilah: LABEL: { proyek: 'Proyek', proyekPanjang: 'Proyek', uangMuka: 'Uang muka', contohProyek: 'Nama proyek' }
 
   // Kode produk untuk nomor invoice INV-<KODE>-<TAHUN>-<BULAN>-<URUT> dan receipt RCP-<KODE>-...
   // Hanya kode yang terdaftar yang diterima. Pilih per invoice dengan baris "Kode: CP" di pesan

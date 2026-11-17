@@ -16,15 +16,18 @@
  *   - request dari Mini App (JSON berisi initData)    -> handleApi_ (Api.gs)
  */
 
-var TEMPLATE_INVOICE =
-  '/invoice\n' +
-  'Kepada: Kedai Kopi Senja\n' +
-  'Domisili: Jakarta\n' +
-  'Proyek: Rebranding Kedai Kopi\n' +
-  'Tanggal Acara: 22 Januari 2027\n' +
-  'Kode: DG\n' +
-  'Item: Paket Desain Logo | 2700000 | 1\n' +
-  'Diskon: 0';
+/** Contoh pesan /invoice, dari CONFIG.CONTOH_CHAT dan paket pertama di CONFIG.PAKET. */
+function templateInvoice_() {
+  var c = CONFIG.CONTOH_CHAT || {}, p = (CONFIG.PAKET || [])[0] || { nama: 'Paket', harga: 1000000 };
+  return '/invoice\n' +
+    'Kepada: ' + (c.kepada || 'Nama Klien') + '\n' +
+    'Domisili: ' + (c.domisili || 'Jakarta') + '\n' +
+    label_('proyek') + ': ' + (c.proyek || 'Nama proyek') + '\n' +
+    'Tanggal Acara: ' + (c.tanggalAcara || '22 Januari 2027') + '\n' +
+    'Kode: ' + CONFIG.KODE_DEFAULT + '\n' +
+    'Item: ' + p.nama + ' | ' + p.harga + ' | 1\n' +
+    'Diskon: 0';
+}
 
 
 var TEMPLATE_RECEIPT =
@@ -60,7 +63,7 @@ function doPost(e) {
 }
 
 function doGet() {
-  return ContentService.createTextOutput('Docket aktif.');
+  return ContentService.createTextOutput((CONFIG.JUDUL_BOT || 'Bot invoice') + ' aktif.');
 }
 
 /**
@@ -102,7 +105,7 @@ function handleUpdate_(update) {
     switch (cmd) {
       case 'invoice':
         return body ? cmdInvoice_(chatId, body, oleh)
-          : sendMessage_(chatId, 'Salin template ini, ubah isinya, lalu kirim:\n<pre>' + esc_(TEMPLATE_INVOICE) + '</pre>');
+          : sendMessage_(chatId, 'Salin template ini, ubah isinya, lalu kirim:\n<pre>' + esc_(templateInvoice_()) + '</pre>');
       case 'receipt':
       case 'kuitansi':
         return body ? cmdReceipt_(chatId, body, oleh)
@@ -129,7 +132,7 @@ function handleUpdate_(update) {
 
 /** Daftar perintah. */
 function helpText_() {
-  return '<b>Docket Lite</b>\n\n' +
+  return '<b>' + esc_(CONFIG.JUDUL_BOT || 'Bot Invoice & Receipt') + '</b>\n\n' +
     '/invoice - buat invoice baru\n' +
     '/receipt - buat receipt pembayaran (otomatis tersimpan ke Google Drive)\n' +
     '/cek - daftar invoice yang belum lunas\n' +
@@ -158,14 +161,14 @@ function cmdInvoice_(chatId, body, oleh) {
     if (it.error) errors.push(it.error); else items.push(it);
   });
   if (!p.items.length) errors.push('Minimal satu baris "Item: nama | harga | jumlah".');
-  if (errors.length) return errorReply_(chatId, errors, TEMPLATE_INVOICE);
+  if (errors.length) return errorReply_(chatId, errors, templateInvoice_());
 
   sendTyping_(chatId);
   var r = createInvoice_({
     kepada: f.kepada, domisili: f.domisili, mempelai: f.mempelai, tanggalAcara: f.tanggalAcara,
     kode: f.kode, noInvoice: f.noInvoice, tglInvoice: f.tglInvoice, items: items, diskon: f.diskon
   }, chatId, oleh);
-  if (r.errors) return errorReply_(chatId, r.errors, TEMPLATE_INVOICE);
+  if (r.errors) return errorReply_(chatId, r.errors, templateInvoice_());
 
   sendDocument_(chatId, r.pdf, invoiceCaption_(r.inv, r.dp) + '\n\n' +
     'Kalau sudah dibayar, kirim:\n<code>/receipt\nInvoice: ' + esc_(r.inv.noInvoice) +
@@ -217,7 +220,7 @@ function cmdCek_(chatId, body) {
     return sendMessage_(chatId,
       '<b>' + esc_(inv.noInvoice) + '</b>\n' +
       'Kepada: ' + esc_(inv.kepada) + '\n' +
-      (inv.mempelai ? 'Proyek: ' + esc_(inv.mempelai) + '\n' : '') +
+      (inv.mempelai ? label_('proyek') + ': ' + esc_(inv.mempelai) + '\n' : '') +
       (inv.tanggalAcara ? 'Acara: ' + esc_(inv.tanggalAcara) + '\n' : '') +
       'Total: ' + fmtRp_(inv.total) + '\n' +
       'Dibayar: ' + fmtRp_(inv.dibayar) + '\n' +

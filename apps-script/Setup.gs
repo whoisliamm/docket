@@ -24,7 +24,7 @@ function setup() {
   if (sheet1 && sheet1.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(sheet1);
 
   if (!props.getProperty('RECEIPT_FOLDER_ID')) {
-    var folder = DriveApp.createFolder('Docket - Receipt');
+    var folder = DriveApp.createFolder((CONFIG.NAMA_USAHA || 'Invoice') + ' - Receipt');
     props.setProperty('RECEIPT_FOLDER_ID', folder.getId());
   }
   if (!props.getProperty('WEBHOOK_KEY')) {
@@ -86,7 +86,7 @@ function testPdf() {
     noInvoice: 'INV-DG-2026-11-000', tglInvoice: tanggalIndo_(new Date()),
     kepada: 'Contoh Klien', domisili: 'Jakarta', mempelai: 'Nama proyek',
     tanggalAcara: '22 Januari 2027',
-    items: [{ nama: 'Paket Desain Logo', harga: 2700000, qty: 1 }],
+    items: [{ nama: ((CONFIG.PAKET || [])[0] || {}).nama || 'Paket', harga: 2700000, qty: 1 }],
     subtotal: 2700000, diskon: 0, total: 2700000
   };
   var pay = {
