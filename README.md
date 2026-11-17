@@ -123,6 +123,7 @@ dengan fitur untuk tim dan lisensi komersial.
 | Dipakai bersama tim: anggota baru lewat tombol **Izinkan**, `/akses` untuk admin | satu pengguna | ✓ |
 | Produk baru langsung dari Mini App | | ✓ |
 | Dashboard Ringkasan dengan grafik di Google Sheets | | ✓ |
+| Dashboard admin di Mini App: atur akses tim, produk & paket, rekening, dan aturan pelunasan tanpa perintah chat | | segera hadir |
 | Dipasang, disesuaikan, dan didampingi Pixelkit | | ✓ |
 
 **Tertarik?** Hubungi Pixelkit untuk membeli versi lengkap atau dibuatkan tools serupa untuk usahamu:
