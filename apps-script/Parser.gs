@@ -43,19 +43,33 @@ function parseFields_(body) {
 
 /**
  * "2.700.000", "2,700,000", "Rp 2700000", "2.7jt", "2,7 juta", "500rb", "500k" -> angka.
- * Hasil NaN kalau tidak bisa dibaca.
+ * Sen di belakang ("1.350.000,00", "1,350,000.00", "2700000,00") dan ",-" ("1.350.000,-") ikut terbaca,
+ * seperti yang biasa tertulis di mutasi bank. Hasil NaN kalau tidak bisa dibaca.
  */
 function parseRupiah_(s) {
   if (s == null) return NaN;
-  var t = String(s).toLowerCase().replace(/rp\.?/g, '').replace(/\s+/g, '');
+  var t = String(s).toLowerCase().replace(/rp\.?/g, '').replace(/\s+/g, '').replace(/[.,]?-$/, '');
   if (!t) return NaN;
   var m = t.match(/^(\d+(?:[.,]\d+)?)(jt|juta|rb|ribu|k)$/);
   if (m) {
     var mult = (m[2] === 'jt' || m[2] === 'juta') ? 1e6 : 1e3;
     return Math.round(parseFloat(m[1].replace(',', '.')) * mult);
   }
+  var sen = rupiahSen_(t);
+  if (sen != null) return sen;
   if (!/^\d[\d.,]*$/.test(t)) return NaN;
   return parseInt(t.replace(/[.,]/g, ''), 10);
+}
+
+/**
+ * Angka dengan 2 digit sen di belakang -> rupiah dibulatkan, atau null kalau bukan bentuk itu.
+ * Pemisah sen harus beda dengan pemisah ribuan ("1.350.000,00"), supaya "1.500.00" (salah ketik)
+ * tidak dikira 1.500 rupiah. Tanpa pemisah ribuan minimal 4 digit ("2700000,00"); "2,50" tetap 250.
+ */
+function rupiahSen_(t) {
+  var m = String(t).match(/^(\d{1,3}(?:([.,])\d{3})+|\d{4,})([.,])(\d{2})$/);
+  if (!m || m[2] === m[3]) return null;
+  return Math.round(parseInt(m[1].replace(/[.,]/g, ''), 10) + parseInt(m[4], 10) / 100);
 }
 
 /** "Nama paket | 2700000 | 1" -> {nama, harga, qty} atau {error} */

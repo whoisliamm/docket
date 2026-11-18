@@ -54,9 +54,37 @@ function getSheet_(name, headers, textCols) {
   return sh;
 }
 
-/** Nilai kolom "Dibuat" (Sheets bisa mengubahnya jadi Date) -> "16 November 2026 15:20". */
+var TZ_SHEET_ = null;
+
+/** Zona waktu spreadsheet (File > Settings). Kalau tidak terbaca, dianggap sama dengan CONFIG.TZ. */
+function tzSheet_() {
+  if (TZ_SHEET_ === null) {
+    try { TZ_SHEET_ = ss_().getSpreadsheetTimeZone() || CONFIG.TZ; } catch (e) { TZ_SHEET_ = CONFIG.TZ; }
+  }
+  return TZ_SHEET_;
+}
+
+/**
+ * Sel yang diubah Sheets menjadi Date. Waktu yang kita tulis ("2026-11-18 10:00:00", jam CONFIG.TZ) dibaca
+ * Sheets menurut zona waktu spreadsheet. Kalau zonanya beda (mis. Asia/Makassar), jamnya bergeser; kembalikan
+ * ke jam yang sama dalam CONFIG.TZ. Nilai lain dikembalikan apa adanya.
+ */
+function dariSel_(v) {
+  if (!(v instanceof Date) || isNaN(v.getTime())) return v;
+  var tz = tzSheet_();
+  if (tz === CONFIG.TZ) return v;
+  var f = 'yyyy-MM-dd HH:mm:ss';
+  try { return Utilities.parseDate(Utilities.formatDate(v, tz, f), CONFIG.TZ, f); } catch (e) { return v; }
+}
+
+/** Nilai sel "Dibuat"/"Dibatalkan" -> "16 November 2026 15:20". */
+function fmtSel_(v) {
+  return fmtDibuat_(dariSel_(v));
+}
+
 /** Nilai kolom "Dibuat" -> waktu (ms), 0 kalau tidak terbaca. */
 function tsDibuat_(v) {
+  v = dariSel_(v);
   if (v instanceof Date) return v.getTime();
   var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/);
   return m ? new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0)).getTime() : 0;
@@ -182,7 +210,7 @@ function tanggalIndo_(date) {
  * (nama bulan yang sama dengan bahasa Inggris) menjadi Date; kembalikan ke "17 November 2026".
  */
 function teksTanggal_(v) {
-  if (Object.prototype.toString.call(v) === '[object Date]') return isNaN(v.getTime()) ? '' : tanggalIndo_(v);
+  if (Object.prototype.toString.call(v) === '[object Date]') return isNaN(v.getTime()) ? '' : tanggalIndo_(dariSel_(v));
   return String(v == null ? '' : v);
 }
 
@@ -205,8 +233,8 @@ function rowToInvoice_(r) {
     items: bacaItems_(r[19], r[6]),
     subtotal: Number(r[7]) || 0, diskon: Number(r[8]) || 0, total: Number(r[9]) || 0,
     dibayar: Number(r[10]) || 0, sisa: Number(r[11]) || 0, status: String(r[12]),
-    dibuatPada: fmtDibuat_(r[13]), dibuatOleh: String(r[15] || ''),
-    diubahPada: fmtDibuat_(r[16]), diubahOleh: String(r[17] || ''), catatan: String(r[18] || ''),
+    dibuatPada: fmtSel_(r[13]), dibuatOleh: String(r[15] || ''),
+    diubahPada: fmtSel_(r[16]), diubahOleh: String(r[17] || ''), catatan: String(r[18] || ''),
     revisi: Number((String(r[18] || '').match(/^Revisi (\d+)/) || [])[1]) || 0
   };
 }
@@ -329,8 +357,8 @@ function listPayments_(noInvoice) {
         tglBayar: teksTanggal_(r[0]), ke: Number(r[2]) || 0, jumlah: Number(r[4]) || 0,
         metode: String(r[5]), totalDibayar: Number(r[6]) || 0, sisa: Number(r[7]) || 0,
         status: String(r[8]), url: String(r[9]),
-        dibuatPada: fmtDibuat_(r[10]), dibuatTs: tsDibuat_(r[10]), dibuatOleh: String(r[12] || ''),
-        dibatalkanPada: fmtDibuat_(r[13]), dibatalkanOleh: String(r[14] || ''),
+        dibuatPada: fmtSel_(r[10]), dibuatTs: tsDibuat_(r[10]), dibuatOleh: String(r[12] || ''),
+        dibatalkanPada: fmtSel_(r[13]), dibatalkanOleh: String(r[14] || ''),
         noReceipt: String(r[15] || '')
       };
     })

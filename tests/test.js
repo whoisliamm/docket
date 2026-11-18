@@ -321,3 +321,36 @@ assert(wres && wres.html === 'ok', 'webhook Telegram dijawab lewat HtmlService (
   assert(!v2.ok && /harga harus lebih dari Rp 0/.test(v2.error), 'server menolak item berharga Rp 0');
 
 }
+
+// ---------------------------------------------------------------- angka dengan sen, gagal kirim PDF
+{
+  const rp = s => ctx.parseRupiah_(s);
+  assert(rp('2.700.000,00') === 2700000 && rp('1,350,000.00') === 1350000 && rp('2700000,00') === 2700000,
+    'angka dengan sen (",00" / ".00") tidak terbaca 100 kali lipat');
+  assert(rp('Rp 1.350.000,-') === 1350000 && rp('500.000-') === 500000, 'akhiran ",-" terbaca');
+  assert(rp('2.700.000') === 2700000 && rp('2,50') === 250 && rp('1.500') === 1500 && rp('2,7jt') === 2700000 && isNaN(rp('-')),
+    'bentuk angka lama tetap terbaca sama');
+
+  // Telegram tidak menjawab (UrlFetchApp melempar error) setelah invoice tersimpan.
+  const fetchAsli = ctx.UrlFetchApp.fetch;
+  ctx.UrlFetchApp.fetch = (url, o) => {
+    const m = url.split('/').pop(); sent.push({ m, p: o.payload });
+    if (m === 'sendDocument') throw new Error('Timeout');
+    return { getContentText: () => '{"ok":true}' };
+  };
+  const jumlahInv = () => sheets[ctx.CONFIG.SHEET_INVOICE].rows.length;
+  const sebelum = jumlahInv();
+  r = call({ action: 'invoice.create', initData: good, requestId: 'tg-gagal-1',
+    data: { kepada: 'Tes Gagal Kirim', kode: 'DG', items: [{ nama: 'Paket', harga: 1000000, qty: 1 }] } });
+  assert(r.ok && r.kirimGagal === true && jumlahInv() === sebelum + 1,
+    'invoice.create: PDF gagal dikirim tetap dijawab ok (kirimGagal), jadi tidak ditawari simpan ulang');
+  r = call({ action: 'invoice.resend', initData: good, data: { noInvoice: r.invoice.noInvoice } });
+  assert(!r.ok && /gagal dikirim/.test(r.error), 'kirim ulang PDF yang gagal dilaporkan gagal');
+  sent.length = 0;
+  upd(950, '/invoice\nKepada: Tes Chat Gagal\nItem: Paket | 1jt | 1');
+  assert(jumlahInv() === sebelum + 2 && sent.some(s => s.m === 'sendMessage' && /sudah tercatat/.test(s.p.text) && /Jangan kirim \/invoice lagi/.test(s.p.text)),
+    '/invoice: PDF gagal dikirim -> diberi tahu invoice sudah tercatat');
+  ctx.UrlFetchApp.fetch = (url, o) => { sent.push({ m: url.split('/').pop(), p: o.payload }); return { getContentText: () => '<html>502 Bad Gateway</html>' }; };
+  assert(ctx.tg_('sendMessage', {}).ok === false, 'jawaban Telegram bukan JSON tidak melempar error');
+  ctx.UrlFetchApp.fetch = fetchAsli;
+}

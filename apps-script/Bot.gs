@@ -170,9 +170,18 @@ function cmdInvoice_(chatId, body, oleh) {
   }, chatId, oleh);
   if (r.errors) return errorReply_(chatId, r.errors, templateInvoice_());
 
-  sendDocument_(chatId, r.pdf, invoiceCaption_(r.inv, r.dp) + '\n\n' +
+  kirimPdf_(chatId, r.pdf, invoiceCaption_(r.inv, r.dp) + '\n\n' +
     'Kalau sudah dibayar, kirim:\n<code>/receipt\nInvoice: ' + esc_(r.inv.noInvoice) +
-    '\nDibayarkan: ' + r.dp + '\nMetode: Transfer ' + esc_(CONFIG.BANK.nama) + '</code>');
+    '\nDibayarkan: ' + r.dp + '\nMetode: Transfer ' + esc_(CONFIG.BANK.nama) + '</code>',
+    'Invoice <b>' + esc_(r.inv.noInvoice) + '</b> sudah tercatat, tapi PDF-nya gagal dikirim. ' +
+    'Jangan kirim /invoice lagi (nanti tercatat dua kali). Kirim ulang PDF-nya dari Mini App: buka invoice lalu ketuk Kirim ulang PDF invoice.');
+}
+
+/** Kirim PDF; kalau gagal, beri tahu bahwa datanya sudah tersimpan supaya tidak dikirim ulang (dobel). */
+function kirimPdf_(chatId, pdf, caption, pesanGagal) {
+  var r = sendDocument_(chatId, pdf, caption);
+  if (!terkirim_(r)) sendMessage_(chatId, '⚠️ ' + pesanGagal);
+  return r;
 }
 
 // ---------------------------------------------------------------- /receipt
@@ -195,7 +204,9 @@ function buatReceiptChat_(chatId, data, oleh) {
   var r = createReceipt_(data, chatId, oleh);
   if (r.errors) return sendMessage_(chatId, '❌ ' + r.errors.map(esc_).join('\n❌ ') +
     '\n\nKetik /cek untuk melihat daftar invoice.');
-  sendDocument_(chatId, r.pdf, receiptCaption_(r.inv, r.pay));
+  kirimPdf_(chatId, r.pdf, receiptCaption_(r.inv, r.pay),
+    'Pembayaran untuk <b>' + esc_(r.inv.noInvoice) + '</b> sudah tercatat' + (r.pay.noReceipt ? ' (' + esc_(r.pay.noReceipt) + ')' : '') +
+    ', tapi PDF receipt gagal dikirim. Jangan kirim /receipt lagi. Receipt-nya ada di Google Drive:\n' + esc_(r.pay.url));
 }
 
 // ---------------------------------------------------------------- /app

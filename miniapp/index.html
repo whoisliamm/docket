@@ -624,11 +624,22 @@ function digits(s) { return parseInt(String(s || '').replace(/\D/g, ''), 10) || 
  * dari jumlah digit di kirinya. Backspace/Delete yang hanya mengenai titik ikut menghapus digit di
  * sebelahnya, supaya tombol hapus tidak terasa macet. Mengembalikan angkanya.
  */
+/*
+ * Angka tempelan dengan sen ("1.500.000,00", "1,500,000.00", "2700000,00") -> rupiah, atau null.
+ * Sama dengan rupiahSen_ di Parser.gs. Saat mengetik bentuk ini tidak bisa muncul (titik/koma langsung dirapikan).
+ */
+function tanpaSen(s) {
+  var m = String(s || '').replace(/\s+/g, '').replace(/^rp\.?/i, '').match(/^(\d{1,3}(?:([.,])\d{3})+|\d{4,})([.,])(\d{2})$/);
+  if (!m || m[2] === m[3]) return null;
+  return Math.round(parseInt(m[1].replace(/[.,]/g, ''), 10) + parseInt(m[4], 10) / 100);
+}
 function fmtInput(el, e) {
   var v = el.value, pos = el.selectionStart == null ? v.length : el.selectionStart;
   var semua = v.replace(/\D/g, ''), kiri = v.slice(0, pos).replace(/\D/g, '').length;
-  var jenis = e && e.inputType;
-  if (semua === el._digit && (jenis === 'deleteContentBackward' || jenis === 'deleteContentForward')) {
+  var jenis = e && e.inputType, sen = tanpaSen(v);
+  if (sen != null) { semua = String(sen); kiri = semua.length; }
+  // el._digit diisi listener beforeinput (lihat bindEvents), jadi tetap benar walau nilai kolom diisi lewat kode.
+  else if (semua === el._digit && (jenis === 'deleteContentBackward' || jenis === 'deleteContentForward')) {
     var at = jenis === 'deleteContentBackward' ? kiri - 1 : kiri;
     if (at >= 0 && at < semua.length) { semua = semua.slice(0, at) + semua.slice(at + 1); kiri = at; }
   }
@@ -751,7 +762,8 @@ function ask(o) {
 /* ---------------- API ---------------- */
 var PESAN_KONEKSI = 'Tidak bisa terhubung ke server. Coba lagi sebentar lagi.';
 var PESAN_TIMEOUT = 'Server tidak menjawab dalam ' + (API_TIMEOUT / 1000) + ' detik. Coba lagi sebentar lagi.';
-var PESAN_CEK = '\nAman untuk menekan simpan lagi: data yang sama tidak akan tercatat dua kali.';
+var PESAN_CEK = '\nBisa jadi datanya sudah tercatat. Cek daftar tagihan dan chat bot dulu sebelum menekan simpan lagi.';
+var PESAN_PDF_GAGAL = 'Data sudah tersimpan, tapi PDF gagal dikirim ke chat. Buka invoice ini lalu ketuk "Kirim ulang PDF invoice".';
 /*
  * Aksi yang mengubah data membawa requestId. Kirim ulang dengan isi yang sama (setelah gagal
  * koneksi/timeout) memakai requestId yang sama, sehingga server bisa mengembalikan hasil
@@ -1136,13 +1148,18 @@ function submitInvoice() {
   };
   setBusy(true);
   api('invoice.create', data).then(function (j) {
-    S.invoices.push(j.invoice);
+    // replaceInv, bukan push: invoice ini bisa sudah masuk daftar lewat muat ulang (mis. kirim ulang setelah timeout).
+    replaceInv(j.invoice);
     haptic('success');
-    resetInvoiceForm();
     renderList();
-    showDone('invoice', j.invoice, j.dp);
-  }).catch(function (e) { haptic('error'); showAlert('invAlert', e.message); })
-    .then(function () { setBusy(false); updateMain(); });
+    var pesan = 'Invoice ' + j.invoice.noInvoice + ' dibuat. ' + (j.kirimGagal ? PESAN_PDF_GAGAL : 'PDF-nya sudah dikirim ke chat kamu.');
+    resetInvoiceForm();
+    if (S.view === 'invoice') showDone('invoice', j.invoice, j.dp, j.kirimGagal);
+    else toast(pesan, j.kirimGagal);
+  }).catch(function (e) {
+    haptic('error');
+    if (S.view === 'invoice') showAlert('invAlert', e.message); else toast(e.message, true);
+  }).then(function () { setBusy(false); updateMain(); });
 }
 
 /* ---------------- pembayaran ---------------- */
@@ -1258,7 +1275,7 @@ function simpanReceipt(c, konfirmasiDobel) {
       S.r.no = null; // tab Pembayaran kembali ke daftar pilihan invoice
       haptic('success');
       renderList();
-      showDone('receipt', j.invoice, j.payment);
+      showDone('receipt', j.invoice, j.payment, j.kirimGagal);
     })
     .catch(function (e) {
       haptic('error');
@@ -1268,13 +1285,13 @@ function simpanReceipt(c, konfirmasiDobel) {
 }
 
 /* ---------------- selesai ---------------- */
-function showDone(kind, inv, extra) {
+function showDone(kind, inv, extra, kirimGagal) {
   var html;
   if (kind === 'invoice') {
     var dp = Number(extra) || 0;
     html = '<div class="done-mark">' + stamp('BELUM BAYAR') + '</div>' +
       '<h2 class="title">Invoice ' + esc(inv.noInvoice) + ' dibuat</h2>' +
-      '<p class="lead">' + (DEMO ? 'Ini hanya contoh: tidak ada yang tersimpan dan tidak ada PDF yang dikirim.' : 'PDF-nya sudah dikirim bot ke chat kamu. Teruskan ke klien dari sana.') + '</p>' +
+      '<p class="lead">' + (DEMO ? 'Ini hanya contoh: tidak ada yang tersimpan dan tidak ada PDF yang dikirim.' : kirimGagal ? PESAN_PDF_GAGAL : 'PDF-nya sudah dikirim bot ke chat kamu. Teruskan ke klien dari sana.') + '</p>' +
       '<hr class="rule"><div class="doc"><dl class="kv num">' + kv([
         ['Kepada', inv.kepada], ['Total', rp(inv.total)], [L('uangMuka') + ' ' + S.config.dpPersen + '%', dp > 0 ? rp(dp) : '']
       ]) + '</dl></div>' +
@@ -1284,7 +1301,9 @@ function showDone(kind, inv, extra) {
     var lunas = extra.status === 'LUNAS', url = safeUrl(extra.url);
     html = '<div class="done-mark">' + stamp(extra.status) + '</div>' +
       '<h2 class="title">' + (lunas ? esc(inv.kepada) + ' sudah lunas' : 'Pembayaran #' + esc(extra.ke) + ' tersimpan') + '</h2>' +
-      '<p class="lead">' + (DEMO ? 'Ini hanya contoh: pembayaran tidak tersimpan dan tidak ada receipt yang dikirim.' : 'Receipt PDF sudah dikirim bot ke chat kamu dan disimpan di Google Drive.') + '</p>' +
+      '<p class="lead">' + (DEMO ? 'Ini hanya contoh: pembayaran tidak tersimpan dan tidak ada receipt yang dikirim.' : kirimGagal
+        ? 'Pembayaran tersimpan dan receipt-nya ada di Google Drive, tapi gagal dikirim ke chat. Buka receipt lewat tombol di bawah.'
+        : 'Receipt PDF sudah dikirim bot ke chat kamu dan disimpan di Google Drive.') + '</p>' +
       '<hr class="rule"><div class="doc"><dl class="kv num">' + kv([
         ['No. Receipt', extra.noReceipt ? '<b>' + esc(extra.noReceipt) + '</b>' : '', true], ['Invoice', inv.noInvoice], ['Kepada', inv.kepada],
         ['Dibayar', rp(extra.jumlah)], ['Sisa pelunasan', rp(Math.max(extra.sisa, 0))]
@@ -1378,6 +1397,12 @@ function bind() {
     renderList();
   });
   $('search').addEventListener('input', function () { S.q = this.value.trim(); renderList(); });
+  // Digit sebelum setiap ketikan, untuk fmtInput (Backspace pada titik ribuan). Diambil di sini, bukan dari
+  // ketikan terakhir, karena nilai kolom juga diisi lewat kode (tombol jumlah cepat, edit invoice).
+  document.addEventListener('beforeinput', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'INPUT') t._digit = t.value.replace(/\D/g, '');
+  }, true);
 
   // tombol yang dibuat dinamis (daftar, detail, selesai, pemilih invoice)
   $('main').addEventListener('click', function (e) {

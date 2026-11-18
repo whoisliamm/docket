@@ -54,8 +54,9 @@ function handleApi_(e) {
         }
         var invR = fr.inv;
         var namaR = 'Invoice ' + invR.noInvoice + (invR.revisi ? ' Rev ' + invR.revisi : '') + ' - ' + safeName_(invR.kepada) + '.pdf';
-        sendDocument_(userId, invoicePdf_(invR, namaR),
+        var kirimR = sendDocument_(userId, invoicePdf_(invR, namaR),
           invoiceCaption_(invR, Math.round(invR.total * CONFIG.DP_PERSEN / 100)) + '\n\n<i>Dikirim ulang dari Mini App.</i>');
+        if (!terkirim_(kirimR)) return json_({ ok: false, error: 'PDF gagal dikirim ke chat. Coba lagi sebentar lagi.' });
         return json_({ ok: true });
       }
 
@@ -88,8 +89,11 @@ function apiWrite_(action, data, userId, oleh) {
 function apiCreateInvoice_(data, userId, oleh) {
   var r = createInvoice_(data, userId, oleh);
   if (r.errors) return { ok: false, error: r.errors.join('\n') };
-  sendDocument_(userId, r.pdf, invoiceCaption_(r.inv, r.dp) + '\n\n<i>Dibuat dari Mini App</i>');
-  return { ok: true, invoice: invoiceSummary_(Object.assign({ dibayar: 0, sisa: r.inv.total, status: 'BELUM BAYAR' }, r.inv)), dp: r.dp };
+  // Invoice sudah tersimpan: gagal kirim PDF tetap dijawab ok (dengan kirimGagal), supaya Mini App tidak
+  // menawarkan simpan ulang yang membuat invoice kedua. PDF bisa dikirim ulang dari detail invoice.
+  var kirim = sendDocument_(userId, r.pdf, invoiceCaption_(r.inv, r.dp) + '\n\n<i>Dibuat dari Mini App</i>');
+  return { ok: true, invoice: invoiceSummary_(Object.assign({ dibayar: 0, sisa: r.inv.total, status: 'BELUM BAYAR' }, r.inv)), dp: r.dp,
+    kirimGagal: !terkirim_(kirim) };
 }
 
 
@@ -97,8 +101,8 @@ function apiCreateReceipt_(data, userId, oleh) {
   data = data || {};
   var r = createReceipt_(data, userId, oleh);
   if (r.errors) return { ok: false, error: r.errors.join('\n') };
-  sendDocument_(userId, r.pdf, receiptCaption_(r.inv, r.pay));
-  return { ok: true, invoice: invoiceSummary_(r.inv), payment: r.pay };
+  var kirim = sendDocument_(userId, r.pdf, receiptCaption_(r.inv, r.pay));
+  return { ok: true, invoice: invoiceSummary_(r.inv), payment: r.pay, kirimGagal: !terkirim_(kirim) };
 }
 
 

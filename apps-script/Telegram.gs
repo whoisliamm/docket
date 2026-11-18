@@ -2,17 +2,33 @@
  * Pemanggilan Telegram Bot API.
  */
 
+/**
+ * Panggil Bot API. Gangguan jaringan atau jawaban bukan JSON (mis. halaman 502) tidak dilempar sebagai error,
+ * tapi dijawab { ok: false }: data yang sudah tersimpan tidak boleh tampak gagal hanya karena pesan tidak terkirim.
+ */
 function tg_(method, payload) {
   var token = prop_('BOT_TOKEN');
   if (!token) throw new Error('BOT_TOKEN belum diisi di Script Properties.');
-  var res = UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/' + method, {
-    method: 'post',
-    payload: payload || {},
-    muteHttpExceptions: true
-  });
-  var json = JSON.parse(res.getContentText());
-  if (!json.ok) console.error('Telegram ' + method + ' gagal: ' + res.getContentText());
-  return json;
+  var teks = '';
+  try {
+    var res = UrlFetchApp.fetch('https://api.telegram.org/bot' + token + '/' + method, {
+      method: 'post',
+      payload: payload || {},
+      muteHttpExceptions: true
+    });
+    teks = res.getContentText();
+    var json = JSON.parse(teks);
+    if (!json.ok) console.error('Telegram ' + method + ' gagal: ' + teks);
+    return json;
+  } catch (err) {
+    console.error('Telegram ' + method + ' gagal: ' + (err && err.message ? err.message : err) + (teks ? ' | ' + teks.slice(0, 300) : ''));
+    return { ok: false, description: String(err && err.message ? err.message : err) };
+  }
+}
+
+/** true kalau jawaban tg_ menandakan terkirim. */
+function terkirim_(r) {
+  return !!(r && r.ok);
 }
 
 function sendMessage_(chatId, html) {
