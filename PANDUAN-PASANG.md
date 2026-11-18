@@ -1,7 +1,18 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/header-dark.png">
+    <img src="docs/header-light.png" alt="Docket by Pixelkit: Everything in your pocket." width="300">
+  </picture>
+</p>
+
 # Panduan pemasangan Docket Lite
 
 Semua file `.gs` ada di folder [`apps-script/`](apps-script/). Pemasangan sekali jalan sekitar 15 menit,
 tanpa server dan tanpa biaya: bot berjalan di Google Apps Script, data di Google Sheets milikmu.
+
+<p align="center">
+  <img src="docs/cara-pasang.webp" alt="Cara memasang: 1 buat bot Telegram, 2-3 tempel kode di Apps Script dan sesuaikan Config, 4-5 isi BOT_TOKEN dan jalankan setup, 6-7 deploy Web app dan isi OWNER_CHAT_ID, 8 pasang Mini App." width="900">
+</p>
 
 ## 1. Buat bot Telegram
 1. Di Telegram, chat **@BotFather**, kirim `/newbot`, lalu ikuti langkahnya.
@@ -26,6 +37,19 @@ Buka `Config.gs` dan ubah:
 
 Logo di kop PDF: isi `LOGO_BASE64`, `LOGO_W`, dan `LOGO_H` di `Assets.gs` (petunjuk ada di file).
 Kalau kosong, kop memakai `NAMA_USAHA`. Warna aksen PDF diatur lewat `WARNA_AKSEN` di `Template.gs`.
+
+Isian di atas muncul di PDF seperti ini:
+
+<table>
+  <tr>
+    <td align="center"><a href="contoh-pdf/1%20Invoice.pdf"><img src="docs/pdf/invoice.png" alt="PDF invoice: kop nama usaha, informasi pembayaran dari BANK dan EMAIL, catatan uang muka dan pelunasan" width="260"></a></td>
+    <td align="center"><a href="contoh-pdf/2%20Receipt%20DP.pdf"><img src="docs/pdf/receipt-dp.png" alt="PDF receipt uang muka dengan sisa pelunasan" width="260"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Invoice</b>: kop dari <code>NAMA_USAHA</code> atau logo, informasi pembayaran dari<br><code>BANK</code> dan <code>EMAIL</code>, catatan dari <code>DP_PERSEN</code>, <code>PELUNASAN</code>, dan <code>WA</code></sub></td>
+    <td align="center"><sub><b>Receipt</b>: jumlah dibayar, sisa tagihan, dan pengingat pelunasan</sub></td>
+  </tr>
+</table>
 
 ## 4. Isi Script Properties
 **Project Settings → Script Properties → Add script property**:
@@ -73,6 +97,14 @@ Cara gratis: **GitHub Pages** atau **Cloudflare Pages / Workers**.
 4. Deploy **New version**, lalu jalankan fungsi **setMiniAppButton**.
 5. Buka chat bot: tombol **Buka App** muncul di kiri kolom ketik. Bisa juga kirim `/app`.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/tagihan-dark.png">
+    <img src="docs/screenshots/tagihan-light.png" alt="Halaman Tagihan, yang tampil pertama kali saat Mini App dibuka" width="220">
+  </picture><br>
+  <sub>Halaman pertama saat Mini App dibuka. Tampilannya mengikuti tema terang atau gelap Telegram.</sub>
+</p>
+
 > Membuka `index.html` langsung di browser (di luar Telegram) menampilkan **mode demo** dengan
 > data contoh, berguna untuk mengecek tampilan.
 
@@ -84,9 +116,29 @@ status, dan filter. Aman dijalankan berkali-kali.
 
 # Cara pakai
 
+<p align="center">
+  <img src="docs/cara-memakai.webp" alt="Cara memakai: 1 buka App, 2 buat invoice, 3 catat bayar, 4 receipt masuk ke chat, 5 tercatat di Sheets." width="900">
+</p>
+
 ## Lewat Mini App
-- **Tagihan**: total sisa tagihan, saringan status, pencarian. Ketuk invoice untuk melihat item,
-  riwayat pembayaran (dengan tautan receipt di Drive), dan mengirim ulang PDF invoice.
+
+<table>
+  <tr>
+    <td align="center" valign="top" width="25%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/tagihan-dark.png"><img src="docs/screenshots/tagihan-light.png" alt="Daftar tagihan dengan total sisa dan saringan status" width="200"></picture></td>
+    <td align="center" valign="top" width="25%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/detail-dark.png"><img src="docs/screenshots/detail-light.png" alt="Detail invoice dengan rincian item dan riwayat pembayaran" width="200"></picture></td>
+    <td align="center" valign="top" width="25%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/invoice-baru-dark.png"><img src="docs/screenshots/invoice-baru-light.png" alt="Form invoice baru dengan pilihan produk" width="200"></picture></td>
+    <td align="center" valign="top" width="25%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/pembayaran-dark.png"><img src="docs/screenshots/pembayaran-light.png" alt="Form catat pembayaran" width="200"></picture></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Tagihan</b><br><sub>Total sisa, saringan status, pencarian</sub></td>
+    <td align="center"><b>Detail</b><br><sub>Item, riwayat bayar, kirim ulang PDF</sub></td>
+    <td align="center"><b>Invoice baru</b><br><sub>Produk, klien, item, diskon</sub></td>
+    <td align="center"><b>Pembayaran</b><br><sub>Jumlah atau Lunasi sisa, metode</sub></td>
+  </tr>
+</table>
+
+- **Tagihan**: total sisa tagihan, saringan status, pencarian. Ketuk invoice untuk membuka **Detail**.
+- **Detail**: item, riwayat pembayaran (dengan tautan receipt di Drive), dan tombol kirim ulang PDF invoice.
 - **Invoice baru**: pilih produk, isi klien dan item, diskon Rp atau %. Nomor dibuat otomatis.
 - **Pembayaran**: pilih invoice, isi jumlah (atau **Lunasi sisa**), pilih metode, lalu simpan.
 
@@ -118,6 +170,11 @@ Metode: Transfer BCA
 - `/app` membuka Mini App, `/id` menampilkan Chat ID.
 
 ## Penomoran
+
+<p align="center">
+  <img src="docs/cara-penomoran.webp" alt="Format nomor INV-JSA-2026-11-004: jenis dokumen, kode produk, tahun dan bulan, nomor urut tiga digit." width="900">
+</p>
+
 | Dokumen | Format | Contoh |
 |---|---|---|
 | Invoice | `INV-<kode>-<tahun>-<bulan>-<urut>` | `INV-JSA-2026-11-004` |
