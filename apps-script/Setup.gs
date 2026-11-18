@@ -83,14 +83,14 @@ function webhookInfo() {
 /** Membuat contoh PDF di folder receipt/_contoh tanpa mengubah log. */
 function testPdf() {
   var inv = {
-    noInvoice: 'INV-DG-2026-11-000', tglInvoice: tanggalIndo_(new Date()),
+    noInvoice: 'INV-JSA-2026-11-000', tglInvoice: tanggalIndo_(new Date()),
     kepada: 'Contoh Klien', domisili: 'Jakarta', mempelai: 'Nama proyek',
     tanggalAcara: '22 Januari 2027',
     items: [{ nama: ((CONFIG.PAKET || [])[0] || {}).nama || 'Paket', harga: 2700000, qty: 1 }],
     subtotal: 2700000, diskon: 0, total: 2700000
   };
   var pay = {
-    noReceipt: 'RCP-DG-2026-11-000', jumlah: 1350000, totalDibayar: 1350000, sisa: 1350000, ke: 1,
+    noReceipt: 'RCP-JSA-2026-11-000', jumlah: 1350000, totalDibayar: 1350000, sisa: 1350000, ke: 1,
     metode: 'Transfer BCA', tglBayar: tanggalIndo_(new Date()), status: 'DP DITERIMA'
   };
   var root = DriveApp.getFolderById(prop_('RECEIPT_FOLDER_ID'));

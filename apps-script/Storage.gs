@@ -146,7 +146,7 @@ function padUrut_(n) {
 }
 
 /**
- * Nomor berikutnya untuk prefix "INV-DG-2026-11-" dari daftar nomor yang sudah ada.
+ * Nomor berikutnya untuk prefix "INV-JSA-2026-11-" dari daftar nomor yang sudah ada.
  * Nomor lama tanpa nol ("-4") dan baru ("-004") sama-sama terbaca. NOMOR_AWAL di Config
  * menentukan nomor pertama yang boleh dipakai (untuk melanjutkan nomor dari luar bot).
  */
@@ -164,7 +164,7 @@ function nextNumber_(prefix, existing) {
   return prefix + padUrut_(max + 1);
 }
 
-/** Kode produk dari nomor invoice: "INV-CP-2026-11-002" -> "CP". */
+/** Kode produk dari nomor invoice: "INV-PRD-2026-11-002" -> "PRD". */
 function kodeDariNo_(noInvoice) {
   var m = String(noInvoice || '').toUpperCase().match(/^INV-([A-Z0-9]+)-\d{4}-\d{2}-/);
   return m ? m[1] : CONFIG.KODE_DEFAULT;
@@ -322,7 +322,7 @@ function saveReceiptToDrive_(blob) {
   return folder.createFile(blob);
 }
 
-/** Nama produk untuk judul PDF, dari kode di nomor invoice ("INV-CP-..." -> nama produk CP). */
+/** Nama produk untuk judul PDF, dari kode di nomor invoice ("INV-PRD-..." -> nama produk PRD). */
 function produkNama_(noInvoice) {
   try { return produk_()[kodeDariNo_(noInvoice)] || ''; } catch (e) { return CONFIG.PRODUK[kodeDariNo_(noInvoice)] || ''; }
 }

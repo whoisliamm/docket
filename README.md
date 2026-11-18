@@ -47,7 +47,7 @@
 </p>
 
 1. **Buka App** lewat tombol menu di chat bot, atau kirim `/app`.
-2. **Buat invoice**: pilih produk, isi klien dan item. Nomor seperti `INV-DG-2026-11-001` dibuat otomatis, PDF-nya masuk ke chat untuk diteruskan ke klien.
+2. **Buat invoice**: pilih produk, isi klien dan item. Nomor seperti `INV-JSA-2026-11-001` dibuat otomatis, PDF-nya masuk ke chat untuk diteruskan ke klien.
 3. **Catat bayar**: pilih invoice, isi jumlah dan metode. Sisa tagihan dan status dihitung otomatis.
 4. **Receipt** PDF dikirim ke chat dan tersimpan di Google Drive, per bulan.
 5. **Sheets**: setiap invoice dan pembayaran tercatat rapi, siap direkap.

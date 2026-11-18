@@ -45,8 +45,8 @@ function aturanPelunasan_(noInvoice) {
 
 /**
  * Batas pelunasan sesuai aturan produk.
- * DG: 14 hari sebelum tanggal acara -> { ts, teks: 'Paling lambat 8 Januari 2027 (14 hari sebelum acara)' }
- * CP: { ts: 0, teks: 'Dilakukan saat pesanan selesai' }. Tanpa aturan: { ts: 0, teks: '' }.
+ * JSA: 14 hari sebelum tanggal acara -> { ts, teks: 'Paling lambat 8 Januari 2027 (14 hari sebelum acara)' }
+ * PRD: { ts: 0, teks: 'Dilakukan saat pesanan selesai' }. Tanpa aturan: { ts: 0, teks: '' }.
  */
 function batasPelunasan_(noInvoice, tanggalAcara) {
   var a = aturanPelunasan_(noInvoice);
@@ -67,8 +67,8 @@ function jadwalPelunasan_(noInvoice, tanggalAcara) {
 
 /**
  * Pengingat pelunasan di receipt yang belum lunas.
- * DG: "Pelunasan Rp 1.600.000 paling lambat 8 Januari 2027 (14 hari sebelum acara)."
- * CP: "Pelunasan Rp 1.600.000 dilakukan saat pesanan selesai."
+ * JSA: "Pelunasan Rp 1.600.000 paling lambat 8 Januari 2027 (14 hari sebelum acara)."
+ * PRD: "Pelunasan Rp 1.600.000 dilakukan saat pesanan selesai."
  */
 function pengingatPelunasan_(noInvoice, sisa, tanggalAcara) {
   if (sisa <= 0) return '';

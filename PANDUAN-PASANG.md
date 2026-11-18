@@ -99,7 +99,7 @@ Kepada: Kedai Kopi Senja
 Domisili: Jakarta
 Proyek: Rebranding Kedai Kopi
 Tanggal Acara: 22 Januari 2027
-Kode: DG
+Kode: JSA
 Item: Paket Desain Logo | 2700000 | 1
 Item: Revisi Tambahan | 500rb | 2
 Diskon: 0
@@ -107,7 +107,7 @@ Diskon: 0
 
 ```
 /receipt
-Invoice: INV-DG-2026-11-004
+Invoice: INV-JSA-2026-11-004
 Dibayarkan: 1350000
 Metode: Transfer BCA
 ```
@@ -120,8 +120,8 @@ Metode: Transfer BCA
 ## Penomoran
 | Dokumen | Format | Contoh |
 |---|---|---|
-| Invoice | `INV-<kode>-<tahun>-<bulan>-<urut>` | `INV-DG-2026-11-004` |
-| Receipt | `RCP-<kode>-<tahun>-<bulan>-<urut>` | `RCP-DG-2026-11-012` |
+| Invoice | `INV-<kode>-<tahun>-<bulan>-<urut>` | `INV-JSA-2026-11-004` |
+| Receipt | `RCP-<kode>-<tahun>-<bulan>-<urut>` | `RCP-JSA-2026-11-012` |
 
 Nomor urut tiga digit, mulai dari 001 setiap bulan untuk tiap kode. Untuk melanjutkan nomor yang
 sudah dipakai sebelumnya, isi `NOMOR_AWAL` di `Config.gs`.

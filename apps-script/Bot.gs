@@ -32,7 +32,7 @@ function templateInvoice_() {
 
 var TEMPLATE_RECEIPT =
   '/receipt\n' +
-  'Invoice: INV-DG-2026-11-001\n' +
+  'Invoice: INV-JSA-2026-11-001\n' +
   'Dibayarkan: 1350000\n' +
   'Metode: Transfer BCA';
 
@@ -188,7 +188,7 @@ function kirimPdf_(chatId, pdf, caption, pesanGagal) {
 
 function cmdReceipt_(chatId, body, oleh) {
   var f = parseFields_(body).fields;
-  // Nomor invoice boleh langsung ditulis setelah /receipt, mis. "/receipt INV-DG-2026-11-001"
+  // Nomor invoice boleh langsung ditulis setelah /receipt, mis. "/receipt INV-JSA-2026-11-001"
   var noInvoice = f.noInvoice || (body.match(/INV-[A-Z0-9-]+/i) || [])[0];
   var errors = [];
   if (!noInvoice) errors.push('"Invoice" (nomor invoice) wajib diisi.');

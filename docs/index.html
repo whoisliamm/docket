@@ -1635,29 +1635,29 @@ function refresh(force) {
  * ========================================================================== */
 var DEMO_DB = {
   config: {
-    dpPersen: 50, kodeDefault: 'DG', kodeList: ['DG', 'CP', 'ADD'], produk: { DG: 'Desain Grafis', CP: 'Percetakan', ADD: 'Tambahan' },
+    dpPersen: 50, kodeDefault: 'JSA', kodeList: ['JSA', 'PRD', 'TMB'], produk: { JSA: 'Jasa', PRD: 'Produk', TMB: 'Tambahan' },
     metode: ['Transfer BCA', 'QRIS', 'Tunai'],
     paket: [{ nama: 'Paket Desain Logo', harga: 2700000 }, { nama: 'Revisi Tambahan', harga: 500000 }]
   },
   invoices: [
-    { noInvoice: 'INV-DG-2026-10-004', tglInvoice: '20 Oktober 2026', kepada: 'Contoh Klien C', domisili: 'Bandung', mempelai: '', tanggalAcara: '7 Desember 2026',
+    { noInvoice: 'INV-JSA-2026-10-004', tglInvoice: '20 Oktober 2026', kepada: 'Contoh Klien C', domisili: 'Bandung', mempelai: '', tanggalAcara: '7 Desember 2026',
       items: [{ nama: 'Paket Desain Logo', harga: 2700000, qty: 2 }], subtotal: 5400000, diskon: 400000, total: 5000000, dibayar: 4000000, status: 'PEMBAYARAN DITERIMA', dibuatOleh: 'Contoh Staf A' },
-    { noInvoice: 'INV-DG-2026-11-001', tglInvoice: '3 November 2026', kepada: 'Contoh Klien B', domisili: 'Surabaya', mempelai: '', tanggalAcara: '29 November 2026',
+    { noInvoice: 'INV-JSA-2026-11-001', tglInvoice: '3 November 2026', kepada: 'Contoh Klien B', domisili: 'Surabaya', mempelai: '', tanggalAcara: '29 November 2026',
       items: [{ nama: 'Paket Desain Logo', harga: 2700000, qty: 1 }], subtotal: 2700000, diskon: 0, total: 2700000, dibayar: 2700000, status: 'LUNAS', dibuatOleh: 'Contoh Staf A' },
-    { noInvoice: 'INV-DG-2026-11-002', tglInvoice: '10 November 2026', kepada: 'Contoh Klien A', domisili: 'Bekasi', mempelai: '', tanggalAcara: '14 Desember 2026',
+    { noInvoice: 'INV-JSA-2026-11-002', tglInvoice: '10 November 2026', kepada: 'Contoh Klien A', domisili: 'Bekasi', mempelai: '', tanggalAcara: '14 Desember 2026',
       items: [{ nama: 'Paket Desain Logo', harga: 2700000, qty: 1 }], subtotal: 2700000, diskon: 0, total: 2700000, dibayar: 0, status: 'BELUM BAYAR', dibuatOleh: 'Contoh Staf B' },
-    { noInvoice: 'INV-DG-2026-11-003', tglInvoice: '12 November 2026', kepada: 'Kedai Kopi Senja', domisili: 'Jakarta', mempelai: 'Rebranding Kedai Kopi', tanggalAcara: '22 Januari 2027',
+    { noInvoice: 'INV-JSA-2026-11-003', tglInvoice: '12 November 2026', kepada: 'Kedai Kopi Senja', domisili: 'Jakarta', mempelai: 'Rebranding Kedai Kopi', tanggalAcara: '22 Januari 2027',
       items: [{ nama: 'Paket Desain Logo', harga: 2700000, qty: 1 }, { nama: 'Revisi Tambahan', harga: 500000, qty: 1 }], subtotal: 3200000, diskon: 0, total: 3200000, dibayar: 1600000, status: 'DP DITERIMA', dibuatOleh: 'Contoh Staf A' },
   ],
   payments: {
-    'INV-DG-2026-10-004': [
-      { noReceipt: 'RCP-DG-2026-10-007', ke: 1, tglBayar: '21 Oktober 2026', jumlah: 2500000, metode: 'Transfer BCA', status: 'DP DITERIMA', url: '', dibuatOleh: 'Contoh Staf A' },
-      { noReceipt: 'RCP-DG-2026-11-003', ke: 2, tglBayar: '5 November 2026', jumlah: 1500000, metode: 'QRIS', status: 'PEMBAYARAN DITERIMA', url: '', dibuatOleh: 'Contoh Staf B' }],
-    'INV-DG-2026-11-001': [
-      { noReceipt: 'RCP-DG-2026-11-001', ke: 1, tglBayar: '3 November 2026', jumlah: 1350000, metode: 'Transfer BCA', status: 'DP DITERIMA', url: '', dibuatOleh: 'Contoh Staf A' },
-      { noReceipt: 'RCP-DG-2026-11-010', ke: 2, tglBayar: '15 November 2026', jumlah: 1350000, metode: 'Transfer BCA', status: 'LUNAS', url: '', dibuatOleh: 'Contoh Staf A' }],
-    'INV-DG-2026-11-003': [
-      { noReceipt: 'RCP-DG-2026-11-012', ke: 1, tglBayar: '13 November 2026', jumlah: 1600000, metode: 'Transfer BCA', status: 'DP DITERIMA', url: '', dibuatOleh: 'Contoh Staf B' }]
+    'INV-JSA-2026-10-004': [
+      { noReceipt: 'RCP-JSA-2026-10-007', ke: 1, tglBayar: '21 Oktober 2026', jumlah: 2500000, metode: 'Transfer BCA', status: 'DP DITERIMA', url: '', dibuatOleh: 'Contoh Staf A' },
+      { noReceipt: 'RCP-JSA-2026-11-003', ke: 2, tglBayar: '5 November 2026', jumlah: 1500000, metode: 'QRIS', status: 'PEMBAYARAN DITERIMA', url: '', dibuatOleh: 'Contoh Staf B' }],
+    'INV-JSA-2026-11-001': [
+      { noReceipt: 'RCP-JSA-2026-11-001', ke: 1, tglBayar: '3 November 2026', jumlah: 1350000, metode: 'Transfer BCA', status: 'DP DITERIMA', url: '', dibuatOleh: 'Contoh Staf A' },
+      { noReceipt: 'RCP-JSA-2026-11-010', ke: 2, tglBayar: '15 November 2026', jumlah: 1350000, metode: 'Transfer BCA', status: 'LUNAS', url: '', dibuatOleh: 'Contoh Staf A' }],
+    'INV-JSA-2026-11-003': [
+      { noReceipt: 'RCP-JSA-2026-11-012', ke: 1, tglBayar: '13 November 2026', jumlah: 1600000, metode: 'Transfer BCA', status: 'DP DITERIMA', url: '', dibuatOleh: 'Contoh Staf B' }]
   }
 };
 /*
@@ -1700,7 +1700,7 @@ function mockApiRun(action, d) {
     t.dibayar += d.jumlah;
     var sisa = t.total - t.dibayar;
     t.status = sisa <= 0 ? 'LUNAS' : aktifSebelum === 0 ? 'DP DITERIMA' : 'PEMBAYARAN DITERIMA';
-    var rPrefix = 'RCP-' + (t.noInvoice.split('-')[1] || 'DG') + '-' + todayIso().slice(0, 7) + '-', rMax = 0;
+    var rPrefix = 'RCP-' + (t.noInvoice.split('-')[1] || 'JSA') + '-' + todayIso().slice(0, 7) + '-', rMax = 0;
     Object.keys(db.payments).forEach(function (k) { db.payments[k].forEach(function (p) {
       if ((p.noReceipt || '').indexOf(rPrefix) === 0) rMax = Math.max(rMax, parseInt(p.noReceipt.slice(rPrefix.length), 10) || 0);
     }); });

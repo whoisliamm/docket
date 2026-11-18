@@ -74,9 +74,9 @@ assert(!r.ok && r.code === 'forbidden' && r.userId === '333', 'user tidak terdaf
 r = call({ action: 'bootstrap', initData: initData({ id: 111 }, Math.floor(Date.now() / 1000) - 90000) });
 assert(!r.ok && r.code === 'auth', 'initData kedaluwarsa ditolak');
 
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Kedai Kopi Senja', mempelai: 'J & E', tanggalAcara: '22 Januari 2027', kode: 'DG',
-  items: [{ nama: 'DG Onsite', harga: 2700000, qty: 1 }, { nama: 'QR', harga: 500000, qty: 2 }], diskon: 200000 } });
-assert(r.ok && r.invoice.total === 3500000 && /^INV-DG-\d{4}-\d{2}-001$/.test(r.invoice.noInvoice) && r.dp === 1750000,
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Kedai Kopi Senja', mempelai: 'J & E', tanggalAcara: '22 Januari 2027', kode: 'JSA',
+  items: [{ nama: 'JSA Onsite', harga: 2700000, qty: 1 }, { nama: 'QR', harga: 500000, qty: 2 }], diskon: 200000 } });
+assert(r.ok && r.invoice.total === 3500000 && /^INV-JSA-\d{4}-\d{2}-001$/.test(r.invoice.noInvoice) && r.dp === 1750000,
   'invoice.create ' + (r.invoice && r.invoice.noInvoice) + ' total ' + (r.invoice && r.invoice.total));
 assert(sent.some(s => s.m === 'sendDocument' && s.p.chat_id === '111'), 'PDF invoice dikirim ke chat user');
 const no = r.invoice.noInvoice;
@@ -107,7 +107,7 @@ upd(2, '/invoice\nKepada: Budi\nItem: Paket | abc | 1');
 assert(sent.some(s => s.m === 'sendMessage' && /harga tidak terbaca/.test(s.p.text)), '/invoice error harga');
 upd(3, '/receipt\nInvoice: INV-XX-1\nDibayarkan: 100');
 assert(sent.some(s => s.m === 'sendMessage' && /tidak ditemukan/.test(s.p.text)), '/receipt invoice tidak ada');
-upd(6, '/receipt INV-DG-' + no.split('-').slice(2).join('-') + '\nDibayarkan: 100');
+upd(6, '/receipt INV-JSA-' + no.split('-').slice(2).join('-') + '\nDibayarkan: 100');
 assert(sent.some(s => s.m === 'sendMessage' && /sudah lunas/.test(s.p.text)), '/receipt invoice lunas ditolak');
 sent.length = 0; upd(4, '/app');
 assert(sent.some(s => /web_app/.test(s.p.reply_markup || '')), '/app kirim tombol web_app');
@@ -118,13 +118,13 @@ assert(sent.some(s => s.m === 'setChatMenuButton'), 'setWebhook memasang menu bu
 r = JSON.parse(ctx.doPost({ parameter: {}, postData: { contents: 'bukan json' } }).t);
 assert(!r.ok, 'body bukan JSON ditolak');
 
-// kode produk: DG, CP, ADD + produk tambahan dari tab Produk
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Percetakan', kode: 'CP', items: [{ nama: 'Percetakan', harga: 1000000, qty: 1 }, { nama: 'Revisi Tambahan', harga: 500000, qty: 1 }] } });
-assert(r.ok && /^INV-CP-\d{4}-\d{2}-001$/.test(r.invoice.noInvoice), 'kode CP -> ' + (r.invoice && r.invoice.noInvoice));
+// kode produk: JSA, PRD, TMB + produk tambahan dari tab Produk
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Produk', kode: 'PRD', items: [{ nama: 'Produk', harga: 1000000, qty: 1 }, { nama: 'Revisi Tambahan', harga: 500000, qty: 1 }] } });
+assert(r.ok && /^INV-PRD-\d{4}-\d{2}-001$/.test(r.invoice.noInvoice), 'kode PRD -> ' + (r.invoice && r.invoice.noInvoice));
 r = call({ action: 'invoice.create', initData: good, data: { kepada: 'X', kode: 'QR', items: [{ nama: 'x', harga: 1, qty: 1 }] } });
-assert(!r.ok && /DG \(Desain Grafis\), CP \(Percetakan\), ADD \(Tambahan\)/.test(r.error), 'kode QR ditolak: ' + r.error);
+assert(!r.ok && /JSA \(Jasa\), PRD \(Produk\), TMB \(Tambahan\)/.test(r.error), 'kode QR ditolak: ' + r.error);
 r = call({ action: 'bootstrap', initData: good });
-assert(JSON.stringify(r.config.kodeList) === '["DG","CP","ADD"]' && r.config.produk.ADD === 'Tambahan', 'config Mini App berisi DG, CP, ADD');
+assert(JSON.stringify(r.config.kodeList) === '["JSA","PRD","TMB"]' && r.config.produk.TMB === 'Tambahan', 'config Mini App berisi JSA, PRD, TMB');
 sent.length = 0; upd(7, '/invoice\nKepada: Budi\nKode: XY\nItem: Paket | 100rb | 1');
 assert(sent.some(s => s.m === 'sendMessage' && /tidak dikenal/.test(s.p.text)), '/invoice Kode: XY ditolak di chat');
 
@@ -157,99 +157,99 @@ assert(P('28 November 2026').ym === '2026-11' && P('28 Nov 2026').teks === '28 N
 assert(P('31 Februari 2026') === null && P('besok') === null && P('29 Februari 2027') === null && P('') === null && P('32/1/2026') === null, 'parseTanggal_ menolak tanggal tidak valid');
 const it1 = [{ nama: 'Paket', harga: 1000000, qty: 1 }];
 r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Oktober A', items: it1, tglInvoice: '28 Oktober 2026' } });
-assert(r.ok && r.invoice.noInvoice === 'INV-DG-2026-10-001' && r.invoice.tglInvoice === '28 Oktober 2026', 'Tgl invoice Oktober -> ' + (r.invoice && r.invoice.noInvoice));
+assert(r.ok && r.invoice.noInvoice === 'INV-JSA-2026-10-001' && r.invoice.tglInvoice === '28 Oktober 2026', 'Tgl invoice Oktober -> ' + (r.invoice && r.invoice.noInvoice));
 r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Oktober B', items: it1, tglInvoice: '2026-10-30' } });
-assert(r.ok && r.invoice.noInvoice === 'INV-DG-2026-10-002', 'urut lanjut di bulan Oktober -> ' + (r.invoice && r.invoice.noInvoice));
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Des', kode: 'CP', items: it1, tglInvoice: '5/12/2026' } });
-assert(r.ok && r.invoice.noInvoice === 'INV-CP-2026-12-001' && r.invoice.tglInvoice === '5 Desember 2026', 'format 5/12/2026 disimpan rapi -> ' + (r.invoice && r.invoice.noInvoice));
+assert(r.ok && r.invoice.noInvoice === 'INV-JSA-2026-10-002', 'urut lanjut di bulan Oktober -> ' + (r.invoice && r.invoice.noInvoice));
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Des', kode: 'PRD', items: it1, tglInvoice: '5/12/2026' } });
+assert(r.ok && r.invoice.noInvoice === 'INV-PRD-2026-12-001' && r.invoice.tglInvoice === '5 Desember 2026', 'format 5/12/2026 disimpan rapi -> ' + (r.invoice && r.invoice.noInvoice));
 r = call({ action: 'invoice.create', initData: good, data: { kepada: 'X', items: it1, tglInvoice: 'besok' } });
 assert(!r.ok && /Tgl invoice "besok" tidak terbaca/.test(r.error), 'Tgl invoice tidak terbaca ditolak');
 r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Tanpa tgl', items: it1 } });
 const thisYm = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 7);
-assert(r.ok && r.invoice.noInvoice.indexOf('INV-DG-' + thisYm + '-') === 0, 'tanpa Tgl invoice tetap pakai bulan ini');
+assert(r.ok && r.invoice.noInvoice.indexOf('INV-JSA-' + thisYm + '-') === 0, 'tanpa Tgl invoice tetap pakai bulan ini');
 sent.length = 0; say(70, '/invoice\nKepada: Lina\nTgl Invoice: 30 Sep 2026\nItem: Paket | 1jt | 1');
-assert(sent.some(s => s.m === 'sendDocument' && /INV-DG-2026-09-001/.test(s.p.caption)), '/invoice via chat dengan Tgl Invoice September');
+assert(sent.some(s => s.m === 'sendDocument' && /INV-JSA-2026-09-001/.test(s.p.caption)), '/invoice via chat dengan Tgl Invoice September');
 sent.length = 0; say(71, '/invoice\nKepada: Lina\nTgl Invoice: akhir bulan\nItem: Paket | 1jt | 1');
 assert(sent.some(s => /tidak terbaca/.test(s.p.text || '')), '/invoice via chat dengan Tgl Invoice salah ditolak');
 
 
 // ---------------- penomoran baru: 3 digit, NOMOR_AWAL, receipt RCP, revisi, produk
 const it2 = [{ nama: 'Paket', harga: 1000000, qty: 1 }];
-sheets.Invoice.rows.push(['INV-DG-2026-08-7', '1 Agustus 2026', 'Lama', '', '', '', '[]', 0, 0, 0, 0, 0, 'LUNAS']);
+sheets.Invoice.rows.push(['INV-JSA-2026-08-7', '1 Agustus 2026', 'Lama', '', '', '', '[]', 0, 0, 0, 0, 0, 'LUNAS']);
 r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Agustus', items: it2, tglInvoice: '20 Agustus 2026' } });
-assert(r.ok && r.invoice.noInvoice === 'INV-DG-2026-08-008', 'nomor lama tanpa nol tetap dilanjutkan -> ' + (r.invoice && r.invoice.noInvoice));
-ctx.CONFIG.NOMOR_AWAL['INV-CP-2026-07'] = 6;
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Juli 1', kode: 'CP', items: it2, tglInvoice: '3 Juli 2026' } });
-const r2 = call({ action: 'invoice.create', initData: good, data: { kepada: 'Juli 2', kode: 'CP', items: it2, tglInvoice: '4 Juli 2026' } });
-assert(r.invoice.noInvoice === 'INV-CP-2026-07-006' && r2.invoice.noInvoice === 'INV-CP-2026-07-007', 'NOMOR_AWAL dipakai lalu lanjut -> ' + r.invoice.noInvoice + ', ' + r2.invoice.noInvoice);
-ctx.CONFIG.NOMOR_AWAL['INV-CP-2026-07'] = 3;
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Juli 3', kode: 'CP', items: it2, tglInvoice: '5 Juli 2026' } });
-assert(r.invoice.noInvoice === 'INV-CP-2026-07-008', 'NOMOR_AWAL lebih kecil dari nomor yang ada diabaikan -> ' + r.invoice.noInvoice);
+assert(r.ok && r.invoice.noInvoice === 'INV-JSA-2026-08-008', 'nomor lama tanpa nol tetap dilanjutkan -> ' + (r.invoice && r.invoice.noInvoice));
+ctx.CONFIG.NOMOR_AWAL['INV-PRD-2026-07'] = 6;
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Juli 1', kode: 'PRD', items: it2, tglInvoice: '3 Juli 2026' } });
+const r2 = call({ action: 'invoice.create', initData: good, data: { kepada: 'Juli 2', kode: 'PRD', items: it2, tglInvoice: '4 Juli 2026' } });
+assert(r.invoice.noInvoice === 'INV-PRD-2026-07-006' && r2.invoice.noInvoice === 'INV-PRD-2026-07-007', 'NOMOR_AWAL dipakai lalu lanjut -> ' + r.invoice.noInvoice + ', ' + r2.invoice.noInvoice);
+ctx.CONFIG.NOMOR_AWAL['INV-PRD-2026-07'] = 3;
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Juli 3', kode: 'PRD', items: it2, tglInvoice: '5 Juli 2026' } });
+assert(r.invoice.noInvoice === 'INV-PRD-2026-07-008', 'NOMOR_AWAL lebih kecil dari nomor yang ada diabaikan -> ' + r.invoice.noInvoice);
 
 // receipt: kode ikut invoice, bulan = bulan dicatat, urutan per kode
 const rcpYm = thisYm;
 const noJuli = r.invoice.noInvoice;
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: noJuli, jumlah: 400000 } });
-assert(r.ok && new RegExp('^RCP-CP-' + rcpYm + '-[0-9]{3}$').test(r.payment.noReceipt), 'receipt invoice CP Juli memakai RCP-CP bulan ini -> ' + (r.payment && r.payment.noReceipt));
+assert(r.ok && new RegExp('^RCP-PRD-' + rcpYm + '-[0-9]{3}$').test(r.payment.noReceipt), 'receipt invoice PRD Juli memakai RCP-PRD bulan ini -> ' + (r.payment && r.payment.noReceipt));
 const rcp1 = r.payment.noReceipt;
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: noJuli, jumlah: 100000 } });
 const urut = s => parseInt(s.slice(-3), 10);
 assert(urut(r.payment.noReceipt) === urut(rcp1) + 1 && r.payment.ke === 2, 'receipt berikutnya urut +1 -> ' + r.payment.noReceipt);
 const lastPayRow = sheets.Pembayaran.rows[sheets.Pembayaran.rows.length - 1];
 assert(lastPayRow[15] === r.payment.noReceipt && sheets.Pembayaran.rows[0][15] === 'No Receipt', 'No Receipt tersimpan di kolom P');
-assert(sent.some(s => s.m === 'sendDocument' && s.p.document.name === 'Receipt ' + r.payment.noReceipt + ' - Juli 3.pdf' && /Untuk INV-CP-2026-07-008 \(pembayaran ke-2\)/.test(s.p.caption)), 'nama file & caption receipt memakai nomor RCP');
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'DG baru', items: it2 } });
+assert(sent.some(s => s.m === 'sendDocument' && s.p.document.name === 'Receipt ' + r.payment.noReceipt + ' - Juli 3.pdf' && /Untuk INV-PRD-2026-07-008 \(pembayaran ke-2\)/.test(s.p.caption)), 'nama file & caption receipt memakai nomor RCP');
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'JSA baru', items: it2 } });
 const noDG = r.invoice.noInvoice;
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: noDG, jumlah: 500000 } });
-assert(new RegExp('^RCP-DG-' + rcpYm + '-').test(r.payment.noReceipt), 'urutan RCP-DG terpisah dari RCP-CP -> ' + r.payment.noReceipt);
-ctx.CONFIG.NOMOR_AWAL['RCP-ADD-' + rcpYm] = 4;
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Addon', kode: 'ADD', items: it2 } });
-assert(r.ok && /^INV-ADD-/.test(r.invoice.noInvoice), 'produk ADD bisa dipakai -> ' + r.invoice.noInvoice);
+assert(new RegExp('^RCP-JSA-' + rcpYm + '-').test(r.payment.noReceipt), 'urutan RCP-JSA terpisah dari RCP-PRD -> ' + r.payment.noReceipt);
+ctx.CONFIG.NOMOR_AWAL['RCP-TMB-' + rcpYm] = 4;
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'Addon', kode: 'TMB', items: it2 } });
+assert(r.ok && /^INV-TMB-/.test(r.invoice.noInvoice), 'produk TMB bisa dipakai -> ' + r.invoice.noInvoice);
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: r.invoice.noInvoice, jumlah: 100000 } });
-assert(r.payment.noReceipt === 'RCP-ADD-' + rcpYm + '-004', 'NOMOR_AWAL juga berlaku untuk receipt -> ' + r.payment.noReceipt);
+assert(r.payment.noReceipt === 'RCP-TMB-' + rcpYm + '-004', 'NOMOR_AWAL juga berlaku untuk receipt -> ' + r.payment.noReceipt);
 
 // PDF
-const h = ctx.buildReceiptHtml({ kepada: 'A', domisili: '', noInvoice: 'INV-DG-2026-11-001', tglInvoice: '', mempelai: '', tanggalAcara: '', items: [], subtotal: 0, diskon: 0, total: 0 },
-  { noReceipt: 'RCP-DG-2026-11-012', ke: 2, jumlah: 1, totalDibayar: 1, sisa: 0, metode: 'QRIS', tglBayar: 'x', status: 'LUNAS' });
-assert(/No\. Receipt/.test(h) && /RCP-DG-2026-11-012/.test(h) && /Pembayaran Ke/.test(h), 'PDF receipt mencetak No. Receipt & pembayaran ke');
-const hi = ctx.buildInvoiceHtml({ kepada: 'A', domisili: '', noInvoice: 'INV-DG-2026-11-001', tglInvoice: '', mempelai: '', tanggalAcara: '', items: [], subtotal: 0, diskon: 0, total: 0, revisi: 2 });
-assert(/INV-DG-2026-11-001 <span[^>]*>&middot; Revisi 2<\/span>/.test(hi), 'PDF invoice mencetak Revisi di samping nomor');
+const h = ctx.buildReceiptHtml({ kepada: 'A', domisili: '', noInvoice: 'INV-JSA-2026-11-001', tglInvoice: '', mempelai: '', tanggalAcara: '', items: [], subtotal: 0, diskon: 0, total: 0 },
+  { noReceipt: 'RCP-JSA-2026-11-012', ke: 2, jumlah: 1, totalDibayar: 1, sisa: 0, metode: 'QRIS', tglBayar: 'x', status: 'LUNAS' });
+assert(/No\. Receipt/.test(h) && /RCP-JSA-2026-11-012/.test(h) && /Pembayaran Ke/.test(h), 'PDF receipt mencetak No. Receipt & pembayaran ke');
+const hi = ctx.buildInvoiceHtml({ kepada: 'A', domisili: '', noInvoice: 'INV-JSA-2026-11-001', tglInvoice: '', mempelai: '', tanggalAcara: '', items: [], subtotal: 0, diskon: 0, total: 0, revisi: 2 });
+assert(/INV-JSA-2026-11-001 <span[^>]*>&middot; Revisi 2<\/span>/.test(hi), 'PDF invoice mencetak Revisi di samping nomor');
 
 
 // chat: baris No: ditolak
-sent.length = 0; say(80, '/invoice\nKepada: Manual\nNo: INV-DG-2026-11-099\nItem: Paket | 1jt | 1');
+sent.length = 0; say(80, '/invoice\nKepada: Manual\nNo: INV-JSA-2026-11-099\nItem: Paket | 1jt | 1');
 assert(sent.some(s => /nomor manual tidak dipakai/.test(s.p.text || '')) && !sent.some(s => s.m === 'sendDocument'), '/invoice dengan No: ditolak');
 
 
-// ---------------- pengingat pelunasan per produk (DG: 14 hari sebelum acara)
+// ---------------- pengingat pelunasan per produk (JSA: 14 hari sebelum acara)
 const DAY = 864e5, now = Date.now();
 const tglKe = d => ctx.tanggalIndo_(new Date(now + d * DAY));
-assert(ctx.jadwalPelunasan_('INV-DG-2026-11-001', '22 Januari 2027') === 'Paling lambat 8 Januari 2027 (14 hari sebelum acara)'
-  && ctx.jadwalPelunasan_('INV-DG-2026-11-001', '') === 'Paling lambat 14 hari sebelum acara'
-  && ctx.jadwalPelunasan_('INV-CP-2026-11-001', '22 Januari 2027') === 'Dilakukan saat pesanan selesai'
-  && ctx.jadwalPelunasan_('INV-ADD-2026-11-001', '22 Januari 2027') === '' && ctx.jadwalPelunasan_('INV-UD-2026-11-001', 'x') === '',
-  'jadwal pelunasan: DG 14 hari sebelum acara, CP saat pesanan selesai, ADD & lainnya kosong');
-assert(ctx.jadwalPelunasan_('INV-DG-2026-11-001', '1 Maret 2027') === 'Paling lambat 15 Februari 2027 (14 hari sebelum acara)', 'mundur 14 hari melewati batas bulan');
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'DG Pel', tanggalAcara: '22 Januari 2027', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
+assert(ctx.jadwalPelunasan_('INV-JSA-2026-11-001', '22 Januari 2027') === 'Paling lambat 8 Januari 2027 (14 hari sebelum acara)'
+  && ctx.jadwalPelunasan_('INV-JSA-2026-11-001', '') === 'Paling lambat 14 hari sebelum acara'
+  && ctx.jadwalPelunasan_('INV-PRD-2026-11-001', '22 Januari 2027') === 'Dilakukan saat pesanan selesai'
+  && ctx.jadwalPelunasan_('INV-TMB-2026-11-001', '22 Januari 2027') === '' && ctx.jadwalPelunasan_('INV-UD-2026-11-001', 'x') === '',
+  'jadwal pelunasan: JSA 14 hari sebelum acara, PRD saat pesanan selesai, TMB & lainnya kosong');
+assert(ctx.jadwalPelunasan_('INV-JSA-2026-11-001', '1 Maret 2027') === 'Paling lambat 15 Februari 2027 (14 hari sebelum acara)', 'mundur 14 hari melewati batas bulan');
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'JSA Pel', tanggalAcara: '22 Januari 2027', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
 const noDGp = r.invoice.noInvoice;
 sent.length = 0;
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: noDGp, jumlah: 1000000 } });
-assert(r.payment.pengingat === 'Pelunasan Rp 1.000.000 paling lambat 8 Januari 2027 (14 hari sebelum acara).', 'receipt DP DG: ' + r.payment.pengingat);
+assert(r.payment.pengingat === 'Pelunasan Rp 1.000.000 paling lambat 8 Januari 2027 (14 hari sebelum acara).', 'receipt DP JSA: ' + r.payment.pengingat);
 assert(sent.some(s => s.m === 'sendDocument' && s.p.caption.indexOf('⏰ Pelunasan Rp 1.000.000 paling lambat 8 Januari 2027') >= 0), 'pengingat juga di caption chat');
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: noDGp, jumlah: 400000 } });
 assert(r.payment.pengingat === 'Pelunasan Rp 600.000 paling lambat 8 Januari 2027 (14 hari sebelum acara).', 'cicilan: tanggal sama, sisa terbaru: ' + r.payment.pengingat);
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: noDGp, jumlah: 600000 } });
 assert(r.payment.status === 'LUNAS' && r.payment.pengingat === '', 'receipt lunas tanpa pengingat');
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'DG tanpa acara', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'JSA tanpa acara', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: r.invoice.noInvoice, jumlah: 1000000 } });
-assert(r.payment.pengingat === 'Pelunasan Rp 1.000.000 paling lambat 14 hari sebelum acara.', 'DG tanpa tanggal acara: ' + r.payment.pengingat);
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'CP Pel', kode: 'CP', tanggalAcara: '22 Januari 2027', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
+assert(r.payment.pengingat === 'Pelunasan Rp 1.000.000 paling lambat 14 hari sebelum acara.', 'JSA tanpa tanggal acara: ' + r.payment.pengingat);
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'PRD Pel', kode: 'PRD', tanggalAcara: '22 Januari 2027', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: r.invoice.noInvoice, jumlah: 1000000 } });
-assert(r.payment.pengingat === 'Pelunasan Rp 1.000.000 dilakukan saat pesanan selesai.', 'receipt DP CP: ' + r.payment.pengingat);
-r = call({ action: 'invoice.create', initData: good, data: { kepada: 'ADD Pel', kode: 'ADD', tanggalAcara: '22 Januari 2027', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
+assert(r.payment.pengingat === 'Pelunasan Rp 1.000.000 dilakukan saat pesanan selesai.', 'receipt DP PRD: ' + r.payment.pengingat);
+r = call({ action: 'invoice.create', initData: good, data: { kepada: 'TMB Pel', kode: 'TMB', tanggalAcara: '22 Januari 2027', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
 sent.length = 0;
 r = call({ action: 'receipt.create', initData: good, data: { noInvoice: r.invoice.noInvoice, jumlah: 1000000 } });
-assert(r.payment.pengingat === '' && !sent.some(s => /⏰/.test(s.p.caption || '')), 'receipt DP ADD tanpa pengingat');
+assert(r.payment.pengingat === '' && !sent.some(s => /⏰/.test(s.p.caption || '')), 'receipt DP TMB tanpa pengingat');
 
 
 // ---------------- webhook dijawab 200 (HtmlService), bukan redirect ContentService
@@ -258,7 +258,7 @@ assert(wres && wres.html === 'ok', 'webhook Telegram dijawab lewat HtmlService (
 
 // ---------------- Sheets mengubah "17 November 2026" jadi Date: harus dibaca kembali sebagai teks Indonesia
 {
-  const rd = call({ action: 'invoice.create', initData: good, data: { kode: 'DG', kepada: 'Tgl Date', tanggalAcara: '22 November 2026', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
+  const rd = call({ action: 'invoice.create', initData: good, data: { kode: 'JSA', kepada: 'Tgl Date', tanggalAcara: '22 November 2026', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
   const noD = rd.invoice.noInvoice;
   call({ action: 'receipt.create', initData: good, data: { noInvoice: noD, jumlah: 1000000, tglBayar: '17 November 2026' } });
   const jkt = (y, m, d) => new Date(Date.UTC(y, m - 1, d) - 7 * 3600e3); // tengah malam WIB
@@ -267,20 +267,20 @@ assert(wres && wres.html === 'ok', 'webhook Telegram dijawab lewat HtmlService (
   const fd = ctx.findInvoice_(noD).inv;
   assert(fd.tglInvoice === '17 November 2026' && fd.tanggalAcara === '22 November 2026', 'tanggal Date dari Sheets dibaca sebagai teks Indonesia');
   assert(ctx.listPayments_(noD)[0].tglBayar === '17 November 2026', 'tanggal bayar Date dari Sheets dibaca sebagai teks');
-  assert(/8 November 2026/.test(ctx.jadwalPelunasan_(noD, fd.tanggalAcara)), 'batas DG tetap terhitung dari tanggal acara bertipe Date');
+  assert(/8 November 2026/.test(ctx.jadwalPelunasan_(noD, fd.tanggalAcara)), 'batas JSA tetap terhitung dari tanggal acara bertipe Date');
   assert(ctx.teksTanggal_('') === '' && ctx.teksTanggal_(null) === '' && ctx.teksTanggal_('3 Desember 2026') === '3 Desember 2026', 'teks biasa tidak berubah');
 }
 
 // ---------------- kolom Item ringkas (G) + JSON di kolom T, baris lama tetap terbaca
 {
-  const ri = call({ action: 'invoice.create', initData: good, data: { kode: 'DG', kepada: 'Item Ringkas', tanggalAcara: '3 Desember 2026',
+  const ri = call({ action: 'invoice.create', initData: good, data: { kode: 'JSA', kepada: 'Item Ringkas', tanggalAcara: '3 Desember 2026',
     items: [{ nama: 'Paket A', harga: 1000000, qty: 1 }, { nama: 'Revisi Tambahan', harga: 500000, qty: 2 }] } });
   const noI = ri.invoice.noInvoice;
   const row = sheets['Invoice'].rows.find(r => r[0] === noI);
   assert(row[6] === 'Paket A, Revisi Tambahan ×2', 'kolom Item berisi ringkasan yang mudah dibaca');
   assert(JSON.parse(row[19]).length === 2 && row.length === 20, 'data item lengkap tersimpan di kolom T');
   assert(ctx.findInvoice_(noI).inv.items[1].qty === 2, 'item dibaca dari kolom T');
-  const lama = ['INV-DG-2026-10-001', '1 Oktober 2026', 'Lama', '', '', '', '[{"nama":"Paket Lama","harga":100,"qty":1}]', 100, 0, 100, 0, 100, 'BELUM BAYAR', '', '', '', '', '', ''];
+  const lama = ['INV-JSA-2026-10-001', '1 Oktober 2026', 'Lama', '', '', '', '[{"nama":"Paket Lama","harga":100,"qty":1}]', 100, 0, 100, 0, 100, 'BELUM BAYAR', '', '', '', '', '', ''];
   assert(ctx.rowToInvoice_(lama).items[0].nama === 'Paket Lama', 'baris lama dengan JSON di kolom G tetap terbaca');
   assert(ctx.bacaItems_('', 'Paket rusak').length === 0, 'teks biasa di kolom G tidak membuat error');
 }
@@ -301,7 +301,7 @@ assert(wres && wres.html === 'ok', 'webhook Telegram dijawab lewat HtmlService (
 
 // ---------------------------------------------------------------- kirim ulang PDF invoice dari Mini App
 {
-  const rr = call({ action: 'invoice.create', initData: good, data: { kode: 'DG', kepada: 'Kirim Ulang', tanggalAcara: '3 Desember 2026', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
+  const rr = call({ action: 'invoice.create', initData: good, data: { kode: 'JSA', kepada: 'Kirim Ulang', tanggalAcara: '3 Desember 2026', items: [{ nama: 'Paket', harga: 2000000, qty: 1 }] } });
   const noK = rr.invoice.noInvoice;
   sent.length = 0;
   const r1 = call({ action: 'invoice.resend', initData: good, data: { noInvoice: noK } });
@@ -315,9 +315,9 @@ assert(wres && wres.html === 'ok', 'webhook Telegram dijawab lewat HtmlService (
 {
 
   // Validasi total & harga di server.
-  const v1 = call({ action: 'invoice.create', initData: good, data: { kode: 'DG', kepada: 'Nol', items: [{ nama: 'Paket', harga: 1000000, qty: 1 }], diskon: 1000000 } });
+  const v1 = call({ action: 'invoice.create', initData: good, data: { kode: 'JSA', kepada: 'Nol', items: [{ nama: 'Paket', harga: 1000000, qty: 1 }], diskon: 1000000 } });
   assert(!v1.ok && /lebih dari Rp 0/.test(v1.error), 'server menolak invoice dengan total Rp 0');
-  const v2 = call({ action: 'invoice.create', initData: good, data: { kode: 'DG', kepada: 'Nol', items: [{ nama: 'Gratis', harga: 0, qty: 1 }, { nama: 'Paket', harga: 100, qty: 1 }] } });
+  const v2 = call({ action: 'invoice.create', initData: good, data: { kode: 'JSA', kepada: 'Nol', items: [{ nama: 'Gratis', harga: 0, qty: 1 }, { nama: 'Paket', harga: 100, qty: 1 }] } });
   assert(!v2.ok && /harga harus lebih dari Rp 0/.test(v2.error), 'server menolak item berharga Rp 0');
 
 }
@@ -341,7 +341,7 @@ assert(wres && wres.html === 'ok', 'webhook Telegram dijawab lewat HtmlService (
   const jumlahInv = () => sheets[ctx.CONFIG.SHEET_INVOICE].rows.length;
   const sebelum = jumlahInv();
   r = call({ action: 'invoice.create', initData: good, requestId: 'tg-gagal-1',
-    data: { kepada: 'Tes Gagal Kirim', kode: 'DG', items: [{ nama: 'Paket', harga: 1000000, qty: 1 }] } });
+    data: { kepada: 'Tes Gagal Kirim', kode: 'JSA', items: [{ nama: 'Paket', harga: 1000000, qty: 1 }] } });
   assert(r.ok && r.kirimGagal === true && jumlahInv() === sebelum + 1,
     'invoice.create: PDF gagal dikirim tetap dijawab ok (kirimGagal), jadi tidak ditawari simpan ulang');
   r = call({ action: 'invoice.resend', initData: good, data: { noInvoice: r.invoice.noInvoice } });

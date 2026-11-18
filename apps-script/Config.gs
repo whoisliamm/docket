@@ -16,18 +16,18 @@ var CONFIG = {
   // Label istilah: LABEL: { proyek: 'Proyek', proyekPanjang: 'Proyek', uangMuka: 'Uang muka', contohProyek: 'Nama proyek' }
 
   // Kode produk untuk nomor invoice INV-<KODE>-<TAHUN>-<BULAN>-<URUT> dan receipt RCP-<KODE>-...
-  // Hanya kode yang terdaftar yang diterima. Pilih per invoice dengan baris "Kode: CP" di pesan
+  // Hanya kode yang terdaftar yang diterima. Pilih per invoice dengan baris "Kode: PRD" di pesan
   // atau pilihan Produk di Mini App; tanpa kode dipakai KODE_DEFAULT.
   PRODUK: {
-    DG: 'Desain Grafis',
-    CP: 'Percetakan',
-    ADD: 'Tambahan'
+    JSA: 'Jasa',
+    PRD: 'Produk',
+    TMB: 'Tambahan'
   },
-  KODE_DEFAULT: 'DG',
+  KODE_DEFAULT: 'JSA',
 
   // Nomor urut dibuat otomatis (3 digit: 001, 002, ...). Nomor manual tidak diterima.
   // Untuk melanjutkan nomor yang sudah dibuat di luar bot, isi nomor PERTAMA yang boleh dipakai bot:
-  //   NOMOR_AWAL: { 'INV-DG-2026-12': 6, 'RCP-DG-2026-12': 4 }
+  //   NOMOR_AWAL: { 'INV-JSA-2026-12': 6, 'RCP-JSA-2026-12': 4 }
   NOMOR_AWAL: {},
 
   // Persentase uang muka (DP) yang ditampilkan di invoice.
@@ -47,9 +47,9 @@ var CONFIG = {
   //   { teks: '...' }     -> kalimat tetap
   //   null / tidak ada    -> tanpa catatan pelunasan
   PELUNASAN: {
-    DG: { hariSebelumAcara: 14 },
-    CP: { teks: 'saat pesanan selesai' },
-    ADD: null
+    JSA: { hariSebelumAcara: 14 },
+    PRD: { teks: 'saat pesanan selesai' },
+    TMB: null
   },
 
   // Teks catatan.
@@ -74,7 +74,7 @@ var CONFIG = {
     { nama: 'Revisi Tambahan', harga: 500000 }
   ],
   // Urutan pilihan kode produk di Mini App (harus ada di PRODUK).
-  KODE_LIST: ['DG', 'CP', 'ADD'],
+  KODE_LIST: ['JSA', 'PRD', 'TMB'],
   // Pilihan metode pembayaran di form receipt.
   METODE: ['Transfer BCA', 'QRIS', 'Tunai'],
   // Masa berlaku sesi Mini App (detik). Setelah lewat, pengguna perlu membuka ulang Mini App.
