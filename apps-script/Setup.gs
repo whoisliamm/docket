@@ -220,5 +220,3 @@ function colLetter_(c) {
   return s;
 }
 
-// ---------------------------------------------------------------- tab Ringkasan (angka & grafik)
-
