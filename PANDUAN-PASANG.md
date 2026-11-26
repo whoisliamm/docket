@@ -27,6 +27,8 @@ tanpa server dan tanpa biaya: bot berjalan di Google Apps Script, data di Google
    File `Code.gs` bawaan boleh dihapus.
 4. **Project Settings** (ikon ⚙️) → centang *Show "appsscript.json"*, lalu salin isi
    `appsscript.json` ke file tersebut. Pastikan *Time zone* = `(GMT+07:00) Jakarta`.
+5. Di Google Sheets, buka **File → Settings** dan pilih *Time zone* `(GMT+07:00) Jakarta` juga,
+   supaya tanggal dan jam di Sheets sama dengan yang tercatat oleh bot.
 
 ## 3. Sesuaikan dengan usahamu
 Buka `Config.gs` dan ubah:
